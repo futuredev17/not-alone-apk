@@ -21,6 +21,8 @@ jobs:
           
       - run: flutter pub get
       - run: flutter pub add record:5.0.3
+      - run: chmod +x fix_record.sh
+      - run: ./fix_record.sh
       
       - run: flutter build apk --release
       
