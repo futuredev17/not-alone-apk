@@ -1,0 +1,26 @@
+# pubspec.yaml
+name: not_alone
+description: Not alone — 情绪陪伴
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  http: ^1.2.2
+  audioplayers: ^6.1.0
+  shared_preferences: ^2.3.2
+  table_calendar: ^3.1.2
+  file_picker: ^8.1.4
+  path_provider: ^2.1.4
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/Ring10.wav
+    - assets/sunset.jpg
