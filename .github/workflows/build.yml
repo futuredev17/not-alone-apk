@@ -1,9 +1,9 @@
- name: Build Android APK
+name: Build Android APK
 
- on:
+on:
   workflow_dispatch:
 
- jobs:
+jobs:
   build:
     runs-on: ubuntu-latest
     steps:
@@ -20,18 +20,9 @@
           channel: 'stable'
 
       - run: flutter pub get
-      
-      # 1. 降级版本
-      - run: flutter pub add record:4.4.0
 
-      # 2. 执行强行修改源码的脚本（注意路径，我帮你改好了）
-      - name: Fix record plugin
-        run: chmod +x .github/fix_record_file.txt && bash .github/fix_record_file.txt
-
-      # 3. 开始打包
       - run: flutter build apk --release
 
-      # 4. 上传 APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
