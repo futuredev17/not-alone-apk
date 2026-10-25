@@ -1,5 +1,3 @@
-// 依赖: audioplayers ^6.1.0 / http / shared_preferences / table_calendar / file_picker
-// path_provider / record ^5.1.2 / flutter_localizations  (Flutter >= 3.27, minSdk 23)
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -12,7 +10,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
-import 'package:record/record.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:flutter/foundation.dart';
@@ -26,11 +23,11 @@ final Random rnd = Random();
 String two(int v) => v.toString().padLeft(2, '0');
 String ymd(DateTime d) => '${d.year}-${two(d.month)}-${two(d.day)}';
 
-/// 宽松解析：1998-6-1 / 1998-06-01 / 1998/6/1 / 1998.6.1 / 1998年6月1日 全部支持
 DateTime? parseYmd(String input) {
   final raw = input.trim().replaceAll(RegExp(r'\s+'), '');
   if (raw.isEmpty) return null;
-  final m = RegExp(r'^(\d{4})[-/.年](\d{1,2})[-/.月](\d{1,2})日?$').firstMatch(raw);
+  final m =
+  RegExp(r'^(\d{4})[-/.年](\d{1,2})[-/.月](\d{1,2})日?$').firstMatch(raw);
   if (m == null) return null;
   final y = int.parse(m.group(1)!);
   final mo = int.parse(m.group(2)!);
@@ -72,8 +69,18 @@ String wdShort(int w, bool zh) {
 
 String monthLabel(DateTime d, bool zh) {
   const en = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December',
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
   ];
   return zh ? '${d.year}年${d.month}月' : '${en[d.month - 1]} ${d.year}';
 }
@@ -84,15 +91,27 @@ String bytesLabel(int b) {
   return '${(b / 1024 / 1024).toStringAsFixed(2)} MB';
 }
 
-String descEn(String d) => const {
-  '晴': 'Clear', '多云': 'Cloudy', '阴': 'Overcast', '阵雨': 'Showers',
-  '雷阵雨': 'Thunderstorm', '小雨': 'Light rain', '中雨': 'Rain',
-  '大雨': 'Heavy rain', '暴雨': 'Storm', '雨夹雪': 'Sleet',
-  '小雪': 'Light snow', '中雪': 'Snow', '大雪': 'Heavy snow',
-  '雾': 'Fog', '霾': 'Haze', '浮尘': 'Dust', '扬沙': 'Sand',
-}[d] ?? d;
-
-/* ---------------------------------- i18n ---------------------------------- */
+String descEn(String d) =>
+    const {
+      '晴': 'Clear',
+      '多云': 'Cloudy',
+      '阴': 'Overcast',
+      '阵雨': 'Showers',
+      '雷阵雨': 'Thunderstorm',
+      '小雨': 'Light rain',
+      '中雨': 'Rain',
+      '大雨': 'Heavy rain',
+      '暴雨': 'Storm',
+      '雨夹雪': 'Sleet',
+      '小雪': 'Light snow',
+      '中雪': 'Snow',
+      '大雪': 'Heavy snow',
+      '雾': 'Fog',
+      '霾': 'Haze',
+      '浮尘': 'Dust',
+      '扬沙': 'Sand',
+    }[d] ??
+        d;
 
 const Map<String, List<String>> _dict = {
   'app': ['Not alone', 'Not alone'],
@@ -140,7 +159,10 @@ const Map<String, List<String>> _dict = {
   'connectedTap': ['已互相授权 · 去打招呼', 'Connected · say hi'],
   'noReply': ['对方还没有回应，也许 ta 也在犹豫', 'No reply yet. Maybe they hesitate.'],
   'consentTitle': ['对方同意了你的申请', 'They accepted'],
-  'consentBody': ['「{name}」接受了你的双向授权，你们可以匿名互相倾诉了。', '“{name}” accepted. Talk anonymously now.'],
+  'consentBody': [
+    '「{name}」接受了你的双向授权，你们可以匿名互相倾诉了。',
+    '“{name}” accepted. Talk anonymously now.'
+  ],
   'sayHi': ['说点什么', 'Say something'],
   'treeEmpty': ['这个世界很大，总有人和你同频', 'Someone out there matches you.'],
   'anon': ['匿名', 'anon'],
@@ -188,9 +210,7 @@ const Map<String, List<String>> _dict = {
   'hbSub': ['愿新的一岁，你被世界温柔以待。', 'May the world be gentle with you.'],
   'hbSubAdult': ['从今天起，请为自己而活，也请偶尔为自己软弱。', 'Live for yourself now. Be soft sometimes.'],
   'bNth': ['今天是你的第 {n} 个生日', 'Birthday #{n}'],
-  'cakeBlow': ['对着屏幕轻轻吹气，吹灭蜡烛', 'Blow gently at the screen'],
-  'micDenied': ['麦克风不可用，点击手动吹灭', 'No microphone, tap to blow out'],
-  'blowManual': ['吹不动了？点这里吹灭', 'Tap to put them out'],
+  'blowCandle': ['吹灭蜡烛', 'Blow out the candles'],
   'candlesOut': ['愿望会实现的', 'Your wish will come true'],
   'ringTitle': ['该起床啦', 'Time to wake up'],
   'wokeUp': ['我醒了', "I'm up"],
@@ -245,14 +265,13 @@ extension AppCtx on BuildContext {
   String t(String k, [Map<String, String>? a]) => L10n.of(this).t(k, a);
 }
 
-/* -------------------------------- app store -------------------------------- */
-
 class AppStore extends ChangeNotifier {
   AppStore._(this._p);
 
   static late AppStore I;
 
-  static Future<void> load() async => I = AppStore._(await SharedPreferences.getInstance());
+  static Future<void> load() async =>
+      I = AppStore._(await SharedPreferences.getInstance());
 
   final SharedPreferences _p;
 
@@ -300,7 +319,8 @@ class AppStore extends ChangeNotifier {
 
   String? get birthday => _p.getString('birthday');
   int get birthdayEditYear => _p.getInt('birthdayEditYear') ?? 0;
-  bool get canEditBirthday => birthday == null || birthdayEditYear < DateTime.now().year;
+  bool get canEditBirthday =>
+      birthday == null || birthdayEditYear < DateTime.now().year;
 
   Future<void> setBirthday(String v) async {
     await _p.setString('birthday', v);
@@ -310,7 +330,8 @@ class AppStore extends ChangeNotifier {
 
   String? get cakeShownOn => _p.getString('cakeShownOn');
 
-  Future<void> markCakeShown() async => _p.setString('cakeShownOn', ymd(DateTime.now()));
+  Future<void> markCakeShown() async =>
+      _p.setString('cakeShownOn', ymd(DateTime.now()));
 
   String? get wallpaper => _p.getString('wallpaper');
   String? get ringtone => _p.getString('ringtone');
@@ -334,8 +355,6 @@ class AppStore extends ChangeNotifier {
   }
 }
 
-/* --------------------------------- weather -------------------------------- */
-
 class WNow {
   const WNow({
     required this.city,
@@ -347,8 +366,13 @@ class WNow {
     required this.time,
   });
 
-  final String city, desc, windDir, windPower, time;
-  final int temp, humidity;
+  final String city;
+  final String desc;
+  final String windDir;
+  final String windPower;
+  final String time;
+  final int temp;
+  final int humidity;
 }
 
 class WDay {
@@ -361,7 +385,8 @@ class WDay {
 
   final DateTime date;
   final String dayDesc;
-  final int high, low;
+  final int high;
+  final int low;
 }
 
 class WHour {
@@ -372,11 +397,19 @@ class WHour {
 }
 
 class WSnap {
-  const WSnap({required this.now, this.days = const [], this.hours = const [], this.uv, this.feels});
+  const WSnap({
+    required this.now,
+    this.days = const [],
+    this.hours = const [],
+    this.uv,
+    this.feels,
+  });
+
   final WNow now;
   final List<WDay> days;
   final List<WHour> hours;
-  final double? uv, feels;
+  final double? uv;
+  final double? feels;
 }
 
 class _WErr implements Exception {
@@ -398,7 +431,9 @@ class WeatherController extends ChangeNotifier {
 
   Future<void> refresh({bool force = false}) async {
     if (loading) return;
-    if (!force && _last != null && DateTime.now().difference(_last!) < const Duration(minutes: 10)) {
+    if (!force &&
+        _last != null &&
+        DateTime.now().difference(_last!) < const Duration(minutes: 10)) {
       return;
     }
     loading = true;
@@ -433,11 +468,13 @@ class WeatherController extends ChangeNotifier {
   }
 
   Future<WNow> _now() async {
-    final m = await _get(Uri.https('restapi.amap.com', '/v3/weather/weatherInfo', {
-      'key': kKey,
-      'city': kCity,
-      'extensions': 'base',
-    }));
+    final m = await _get(
+      Uri.https('restapi.amap.com', '/v3/weather/weatherInfo', {
+        'key': kKey,
+        'city': kCity,
+        'extensions': 'base',
+      }),
+    );
     final lives = m['lives'];
     if (lives is! List || lives.isEmpty) throw const _WErr('api');
     final x = Map<String, dynamic>.from(lives.first as Map);
@@ -453,11 +490,13 @@ class WeatherController extends ChangeNotifier {
   }
 
   Future<List<WDay>> _days() async {
-    final m = await _get(Uri.https('restapi.amap.com', '/v3/weather/weatherInfo', {
-      'key': kKey,
-      'city': kCity,
-      'extensions': 'all',
-    }));
+    final m = await _get(
+      Uri.https('restapi.amap.com', '/v3/weather/weatherInfo', {
+        'key': kKey,
+        'city': kCity,
+        'extensions': 'all',
+      }),
+    );
     final fc = m['forecasts'];
     if (fc is! List || fc.isEmpty) return const [];
     final casts = (fc.first as Map)['casts'];
@@ -498,11 +537,13 @@ class WeatherController extends ChangeNotifier {
       for (var i = 0; i < times.length; i++) {
         final t = DateTime.tryParse('${times[i]}');
         if (t == null || t.isBefore(floor)) continue;
-        hours.add(WHour(
-          time: t,
-          temp: _d(i < temps.length ? temps[i] : null),
-          rain: _i(i < rains.length ? rains[i] : null),
-        ));
+        hours.add(
+          WHour(
+            time: t,
+            temp: _d(i < temps.length ? temps[i] : null),
+            rain: _i(i < rains.length ? rains[i] : null),
+          ),
+        );
         if (hours.length >= 12) break;
       }
     }
@@ -545,39 +586,45 @@ class WeatherController extends ChangeNotifier {
 class _Open {
   const _Open({required this.hours, this.uv, this.feels});
   final List<WHour> hours;
-  final double? uv, feels;
+  final double? uv;
+  final double? feels;
 }
-
-/* -------------------------------- holidays -------------------------------- */
 
 enum HScope { cn, de, us }
 
 class Holiday {
   const Holiday(this.scope, this.zh, this.en);
   final HScope scope;
-  final String zh, en;
+  final String zh;
+  final String en;
   String name(bool zhMode) => zhMode ? zh : en;
 }
 
 class _Fixed {
   const _Fixed(this.m, this.d, this.scope, this.zh, this.en);
-  final int m, d;
+  final int m;
+  final int d;
   final HScope scope;
-  final String zh, en;
+  final String zh;
+  final String en;
 }
 
 class _Offset {
   const _Offset(this.o, this.scope, this.zh, this.en);
   final int o;
   final HScope scope;
-  final String zh, en;
+  final String zh;
+  final String en;
 }
 
 class _Nth {
   const _Nth(this.m, this.w, this.n, this.scope, this.zh, this.en);
-  final int m, w, n;
+  final int m;
+  final int w;
+  final int n;
   final HScope scope;
-  final String zh, en;
+  final String zh;
+  final String en;
 }
 
 const List<_Fixed> _fixedHolidays = [
@@ -614,10 +661,34 @@ const List<_Nth> _nthHolidays = [
 ];
 
 const Map<int, Map<String, List<int>>> _lunar = {
-  2024: {'spring': [2, 10], 'lantern': [2, 24], 'dragon': [6, 10], 'mid': [9, 17], 'double': [10, 11]},
-  2025: {'spring': [1, 29], 'lantern': [2, 12], 'dragon': [5, 31], 'mid': [10, 6], 'double': [10, 29]},
-  2026: {'spring': [2, 17], 'lantern': [3, 3], 'dragon': [6, 19], 'mid': [9, 25], 'double': [10, 18]},
-  2027: {'spring': [2, 6], 'lantern': [2, 20], 'dragon': [6, 9], 'mid': [9, 15], 'double': [10, 8]},
+  2024: {
+    'spring': [2, 10],
+    'lantern': [2, 24],
+    'dragon': [6, 10],
+    'mid': [9, 17],
+    'double': [10, 11],
+  },
+  2025: {
+    'spring': [1, 29],
+    'lantern': [2, 12],
+    'dragon': [5, 31],
+    'mid': [10, 6],
+    'double': [10, 29],
+  },
+  2026: {
+    'spring': [2, 17],
+    'lantern': [3, 3],
+    'dragon': [6, 19],
+    'mid': [9, 25],
+    'double': [10, 18],
+  },
+  2027: {
+    'spring': [2, 6],
+    'lantern': [2, 20],
+    'dragon': [6, 9],
+    'mid': [9, 15],
+    'double': [10, 8],
+  },
 };
 
 const Map<String, List<String>> _lunarNames = {
@@ -634,12 +705,16 @@ class _Holidays {
   List<Holiday> forDate(DateTime d) {
     final out = <Holiday>[];
     for (final h in _fixedHolidays) {
-      if (h.m == d.month && h.d == d.day) out.add(Holiday(h.scope, h.zh, h.en));
+      if (h.m == d.month && h.d == d.day) {
+        out.add(Holiday(h.scope, h.zh, h.en));
+      }
     }
     final e = easter(d.year);
     for (final o in _easterHolidays) {
       final x = e.add(Duration(days: o.o));
-      if (x.month == d.month && x.day == d.day) out.add(Holiday(o.scope, o.zh, o.en));
+      if (x.month == d.month && x.day == d.day) {
+        out.add(Holiday(o.scope, o.zh, o.en));
+      }
     }
     for (final n in _nthHolidays) {
       if (n.m != d.month) continue;
@@ -660,20 +735,32 @@ class _Holidays {
     final out = <int, List<Holiday>>{};
     final total = DateTime(y, m + 1, 0).day;
     for (var d = 1; d <= total; d++) {
-      final list = forDate(DateTime(y, m, d)).where((h) => scopes.contains(h.scope)).toList();
+      final list = forDate(DateTime(y, m, d))
+          .where((h) => scopes.contains(h.scope))
+          .toList();
       if (list.isNotEmpty) out[d] = list;
     }
     return out;
   }
 
   DateTime easter(int y) {
-    final a = y % 19, b = y ~/ 100, c = y % 100, d = b ~/ 4, e = b % 4;
-    final f = (b + 8) ~/ 25, g = (b - f + 1) ~/ 3;
+    final a = y % 19;
+    final b = y ~/ 100;
+    final c = y % 100;
+    final d = b ~/ 4;
+    final e = b % 4;
+    final f = (b + 8) ~/ 25;
+    final g = (b - f + 1) ~/ 3;
     final h = (19 * a + b - d - g + 15) % 30;
-    final i = c ~/ 4, k = c % 4;
+    final i = c ~/ 4;
+    final k = c % 4;
     final l = (32 + 2 * e + 2 * i - h - k) % 7;
     final m = (a + 11 * h + 22 * l) ~/ 451;
-    return DateTime(y, (h + l - 7 * m + 114) ~/ 31, (h + l - 7 * m + 114) % 31 + 1);
+    return DateTime(
+      y,
+      (h + l - 7 * m + 114) ~/ 31,
+      (h + l - 7 * m + 114) % 31 + 1,
+    );
   }
 
   int _nthWeekday(int y, int m, int weekday, int n) {
@@ -688,25 +775,31 @@ class _Holidays {
   };
 }
 
-/* --------------------------------- 树洞数据 -------------------------------- */
-
 class Anon {
   const Anon(this.alias, this.metaZh, this.metaEn, this.textZh, this.textEn);
-  final String alias, metaZh, metaEn, textZh, textEn;
+  final String alias;
+  final String metaZh;
+  final String metaEn;
+  final String textZh;
+  final String textEn;
   String meta(bool zh) => zh ? metaZh : metaEn;
   String text(bool zh) => zh ? textZh : textEn;
 }
 
 const List<Anon> _anonPool = [
-  Anon('匿名小猫', '22 岁 · 广州', '22 · Guangzhou', '哪怕今天很糟糕，我也挺过来了', 'Today was awful. But I made it.'),
-  Anon('走神的星星', '25 岁 · 成都', '25 · Chengdu', '凌晨两点睡不着，但没有告诉任何人', 'Awake at 2am. Told nobody.'),
-  Anon('抱膝的人', '19 岁 · 哈尔滨', '19 · Harbin', '今天对喜欢的人说了早安，他没有回', 'Said good morning to my crush. No reply.'),
-  Anon('路过的风', '28 岁 · 杭州', '28 · Hangzhou', '加班到十点，楼下的关东煮是唯一的温暖', 'Worked till ten. Oden was the only warmth.'),
-  Anon('橘子汽水', '21 岁 · 长沙', '21 · Changsha', '一个人搬家，一个人庆祝，也一个人长大', 'Moved alone, grew up alone.'),
-  Anon('安静的树', '30 岁 · 西安', '30 · Xi’an', '我在人群中，但我不在人群里', 'Among people, but not in them.'),
+  Anon('匿名小猫', '22 岁 · 广州', '22 · Guangzhou', '哪怕今天很糟糕，我也挺过来了',
+      'Today was awful. But I made it.'),
+  Anon('走神的星星', '25 岁 · 成都', '25 · Chengdu', '凌晨两点睡不着，但没有告诉任何人',
+      'Awake at 2am. Told nobody.'),
+  Anon('抱膝的人', '19 岁 · 哈尔滨', '19 · Harbin', '今天对喜欢的人说了早安，他没有回',
+      'Said good morning to my crush. No reply.'),
+  Anon('路过的风', '28 岁 · 杭州', '28 · Hangzhou', '加班到十点，楼下的关东煮是唯一的温暖',
+      'Worked till ten. Oden was the only warmth.'),
+  Anon('橘子汽水', '21 岁 · 长沙', '21 · Changsha', '一个人搬家，一个人庆祝，也一个人长大',
+      'Moved alone, grew up alone.'),
+  Anon('安静的树', '30 岁 · 西安', '30 · Xi’an', '我在人群中，但我不在人群里',
+      'Among people, but not in them.'),
 ];
-
-/* ----------------------------------- app ---------------------------------- */
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -721,8 +814,9 @@ class App extends StatelessWidget {
     useMaterial3: true,
     brightness: b,
     colorSchemeSeed: const Color(0xFF8EC5FF),
-    scaffoldBackgroundColor:
-    b == Brightness.dark ? const Color(0xFF07080E) : const Color(0xFFF4F5F9),
+    scaffoldBackgroundColor: b == Brightness.dark
+        ? const Color(0xFF07080E)
+        : const Color(0xFFF4F5F9),
     splashFactory: InkSparkle.splashFactory,
   );
 
@@ -794,23 +888,33 @@ class _RootPageState extends State<RootPage> with WidgetsBindingObserver {
     }
     if (!mounted) return;
     final b = store.birthday;
-    if (b != null && isBirthdayToday(b) && store.cakeShownOn != ymd(DateTime.now())) {
+    if (b != null &&
+        isBirthdayToday(b) &&
+        store.cakeShownOn != ymd(DateTime.now())) {
       await showCake(context, b);
       await store.markCakeShown();
     }
   }
 
   Future<void> _openAlarm() async {
-    final r = await showAlarmSheet(context, AppStore.I.alarmHour, AppStore.I.alarmMinute);
+    final r = await showAlarmSheet(
+      context,
+      AppStore.I.alarmHour,
+      AppStore.I.alarmMinute,
+    );
     if (r == null) return;
     await AppStore.I.setAlarm(r.$1, r.$2);
     if (!mounted) return;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(
-        behavior: SnackBarBehavior.floating,
-        content: Text(context.t('alarmSaved', {'t': '${two(r.$1)}:${two(r.$2)}'})),
-      ));
+      ..showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          content: Text(
+            context.t('alarmSaved', {'t': '${two(r.$1)}:${two(r.$2)}'}),
+          ),
+        ),
+      );
   }
 
   @override
@@ -884,8 +988,6 @@ class _RootPageState extends State<RootPage> with WidgetsBindingObserver {
   }
 }
 
-/* -------------------------------- 通用组件 -------------------------------- */
-
 class GlassCard extends StatelessWidget {
   const GlassCard({
     super.key,
@@ -940,11 +1042,18 @@ class GlassCard extends StatelessWidget {
                       title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: base.withValues(alpha: 0.72), fontSize: 11),
+                      style: TextStyle(
+                        color: base.withValues(alpha: 0.72),
+                        fontSize: 11,
+                      ),
                     ),
                   ),
                   if (onTap != null)
-                    Icon(Icons.chevron_right, size: 13, color: base.withValues(alpha: 0.45)),
+                    Icon(
+                      Icons.chevron_right,
+                      size: 13,
+                      color: base.withValues(alpha: 0.45),
+                    ),
                 ],
               ),
               const SizedBox(height: 10),
@@ -964,7 +1073,10 @@ class GlassCard extends StatelessWidget {
                 subtitle ?? '',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: base.withValues(alpha: 0.45), fontSize: 10),
+                style: TextStyle(
+                  color: base.withValues(alpha: 0.45),
+                  fontSize: 10,
+                ),
               ),
             ],
           ),
@@ -972,7 +1084,11 @@ class GlassCard extends StatelessWidget {
       ),
     );
     if (onTap == null) return card;
-    return GestureDetector(behavior: HitTestBehavior.opaque, onTap: onTap, child: card);
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: card,
+    );
   }
 }
 
@@ -983,7 +1099,9 @@ Future<T?> showAppSheet<T>(BuildContext context, WidgetBuilder builder) {
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (ctx) => Container(
-      constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(ctx).height * 0.86),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(ctx).height * 0.86,
+      ),
       decoration: BoxDecoration(
         color: cs.surfaceContainerHigh,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
@@ -1013,6 +1131,7 @@ Future<T?> showAppSheet<T>(BuildContext context, WidgetBuilder builder) {
 
 class SheetTitle extends StatelessWidget {
   const SheetTitle(this.text, {super.key});
+
   final String text;
 
   @override
@@ -1028,8 +1147,6 @@ class SheetTitle extends StatelessWidget {
     ),
   );
 }
-
-/* --------------------------------- 迷你日历 -------------------------------- */
 
 class MiniCalendar extends StatelessWidget {
   const MiniCalendar({
@@ -1062,8 +1179,11 @@ class MiniCalendar extends StatelessWidget {
             children: [
               IconButton(
                 visualDensity: VisualDensity.compact,
-                onPressed: () => onFocused(DateTime(focused.year, focused.month - 1, 1)),
-                icon: const Icon(Icons.chevron_left, size: 18, color: Colors.white),
+                onPressed: () => onFocused(
+                  DateTime(focused.year, focused.month - 1, 1),
+                ),
+                icon: const Icon(Icons.chevron_left,
+                    size: 18, color: Colors.white),
               ),
               Expanded(
                 child: Center(
@@ -1079,8 +1199,11 @@ class MiniCalendar extends StatelessWidget {
               ),
               IconButton(
                 visualDensity: VisualDensity.compact,
-                onPressed: () => onFocused(DateTime(focused.year, focused.month + 1, 1)),
-                icon: const Icon(Icons.chevron_right, size: 18, color: Colors.white),
+                onPressed: () => onFocused(
+                  DateTime(focused.year, focused.month + 1, 1),
+                ),
+                icon: const Icon(Icons.chevron_right,
+                    size: 18, color: Colors.white),
               ),
             ],
           ),
@@ -1100,18 +1223,31 @@ class MiniCalendar extends StatelessWidget {
             calendarStyle: CalendarStyle(
               outsideDaysVisible: false,
               cellMargin: const EdgeInsets.all(2),
-              defaultTextStyle: const TextStyle(color: Color(0xB3FFFFFF), fontSize: 11),
-              weekendTextStyle: const TextStyle(color: Color(0x80FFFFFF), fontSize: 11),
-              todayDecoration: const BoxDecoration(color: Color(0x3DFFFFFF), shape: BoxShape.circle),
-              todayTextStyle: const TextStyle(color: Colors.white, fontSize: 11),
-              selectedDecoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-              selectedTextStyle: const TextStyle(color: Colors.black, fontSize: 11),
+              defaultTextStyle:
+              const TextStyle(color: Color(0xB3FFFFFF), fontSize: 11),
+              weekendTextStyle:
+              const TextStyle(color: Color(0x80FFFFFF), fontSize: 11),
+              todayDecoration: const BoxDecoration(
+                color: Color(0x3DFFFFFF),
+                shape: BoxShape.circle,
+              ),
+              todayTextStyle:
+              const TextStyle(color: Colors.white, fontSize: 11),
+              selectedDecoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              selectedTextStyle:
+              const TextStyle(color: Colors.black, fontSize: 11),
             ),
             calendarBuilders: CalendarBuilders<Holiday>(
               dowBuilder: (c, d) => Center(
                 child: Text(
                   wdShort(d.weekday, l.isZh),
-                  style: const TextStyle(color: Color(0x66FFFFFF), fontSize: 9),
+                  style: const TextStyle(
+                    color: Color(0x66FFFFFF),
+                    fontSize: 9,
+                  ),
                 ),
               ),
               markerBuilder: (c, d, e) => e.isEmpty
@@ -1135,8 +1271,6 @@ class MiniCalendar extends StatelessWidget {
   }
 }
 
-/* --------------------------------- 天气组件 -------------------------------- */
-
 class MetricGrid extends StatelessWidget {
   const MetricGrid({super.key, required this.snap});
   final WSnap snap;
@@ -1148,8 +1282,16 @@ class MetricGrid extends StatelessWidget {
     final items = <(IconData, String, String)>[
       (Icons.water_drop_outlined, l.t('humidity'), '${snap.now.humidity}%'),
       (Icons.air, l.t('wind'), '${snap.now.windDir} ${snap.now.windPower}'),
-      (Icons.wb_sunny_outlined, l.t('uv'), snap.uv == null ? '—' : snap.uv!.toStringAsFixed(1)),
-      (Icons.thermostat_outlined, l.t('feels'), snap.feels == null ? '—' : '${snap.feels!.round()}°C'),
+      (
+      Icons.wb_sunny_outlined,
+      l.t('uv'),
+      snap.uv == null ? '—' : snap.uv!.toStringAsFixed(1),
+      ),
+      (
+      Icons.thermostat_outlined,
+      l.t('feels'),
+      snap.feels == null ? '—' : '${snap.feels!.round()}°C',
+      ),
     ];
     return GridView.count(
       crossAxisCount: 2,
@@ -1168,18 +1310,24 @@ class MetricGrid extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(it.$1, size: 15, color: cs.onSurface.withValues(alpha: 0.55)),
+                Icon(
+                  it.$1,
+                  size: 15,
+                  color: cs.onSurface.withValues(alpha: 0.55),
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(it.$2,
-                          style: TextStyle(
-                            color: cs.onSurface.withValues(alpha: 0.45),
-                            fontSize: 10,
-                          )),
+                      Text(
+                        it.$2,
+                        style: TextStyle(
+                          color: cs.onSurface.withValues(alpha: 0.45),
+                          fontSize: 10,
+                        ),
+                      ),
                       Text(
                         it.$3,
                         maxLines: 1,
@@ -1226,27 +1374,33 @@ class HourStrip extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('${two(h.time.hour)}:00',
-                    style: TextStyle(
-                      color: cs.onSurface.withValues(alpha: 0.5),
-                      fontSize: 10,
-                    )),
+                Text(
+                  '${two(h.time.hour)}:00',
+                  style: TextStyle(
+                    color: cs.onSurface.withValues(alpha: 0.5),
+                    fontSize: 10,
+                  ),
+                ),
                 Icon(
                   h.rain >= 50 ? Icons.umbrella_outlined : Icons.wb_sunny_outlined,
                   size: 15,
                   color: cs.onSurface.withValues(alpha: 0.6),
                 ),
-                Text('${h.temp.round()}°',
-                    style: TextStyle(
-                      color: cs.onSurface,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    )),
-                Text('${h.rain}%',
-                    style: TextStyle(
-                      color: cs.onSurface.withValues(alpha: 0.4),
-                      fontSize: 9,
-                    )),
+                Text(
+                  '${h.temp.round()}°',
+                  style: TextStyle(
+                    color: cs.onSurface,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  '${h.rain}%',
+                  style: TextStyle(
+                    color: cs.onSurface.withValues(alpha: 0.4),
+                    fontSize: 9,
+                  ),
+                ),
               ],
             ),
           );
@@ -1274,7 +1428,8 @@ class DayList extends StatelessWidget {
                 SizedBox(
                   width: 96,
                   child: Text(
-                    '${d.date.month}/${d.date.day} ${wdFull(d.date.weekday, l.isZh)}',
+                    '${d.date.month}/${d.date.day} '
+                        '${wdFull(d.date.weekday, l.isZh)}',
                     style: TextStyle(
                       color: cs.onSurface.withValues(alpha: 0.55),
                       fontSize: 11,
@@ -1362,7 +1517,8 @@ Future<void> showWeatherSheet(BuildContext context, WeatherController c) {
                     child: Padding(
                       padding: const EdgeInsets.only(bottom: 6),
                       child: Text(
-                        '${l.isZh ? s.now.desc : descEn(s.now.desc)} · ${s.now.city}',
+                        '${l.isZh ? s.now.desc : descEn(s.now.desc)} · '
+                            '${s.now.city}',
                         style: TextStyle(
                           color: cs.onSurface.withValues(alpha: 0.6),
                           fontSize: 12,
@@ -1410,8 +1566,6 @@ Future<void> showWeatherSheet(BuildContext context, WeatherController c) {
   });
 }
 
-/* ---------------------------------- 首页 ---------------------------------- */
-
 class HomePage extends StatefulWidget {
   const HomePage({
     super.key,
@@ -1424,8 +1578,10 @@ class HomePage extends StatefulWidget {
   });
 
   final WeatherController weather;
-  final int hour, minute;
-  final String? wallpaper, ringtone;
+  final int hour;
+  final int minute;
+  final String? wallpaper;
+  final String? ringtone;
   final VoidCallback onAlarm;
 
   @override
@@ -1543,8 +1699,16 @@ class _HomePageState extends State<HomePage> {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: night
-                  ? const [Color(0x8C000000), Color(0x33000000), Color(0xE0000000)]
-                  : const [Color(0x6B000000), Color(0x22000000), Color(0xB8000000)],
+                  ? const [
+                Color(0x8C000000),
+                Color(0x33000000),
+                Color(0xE0000000),
+              ]
+                  : const [
+                Color(0x6B000000),
+                Color(0x22000000),
+                Color(0xB8000000),
+              ],
             ),
           ),
         ),
@@ -1573,7 +1737,10 @@ class _HomePageState extends State<HomePage> {
                           const SizedBox(height: 4),
                           Text(
                             _greet(l),
-                            style: const TextStyle(color: Color(0xB3FFFFFF), fontSize: 12),
+                            style: const TextStyle(
+                              color: Color(0xB3FFFFFF),
+                              fontSize: 12,
+                            ),
                           ),
                         ],
                       ),
@@ -1581,7 +1748,10 @@ class _HomePageState extends State<HomePage> {
                     IconButton(
                       tooltip: l.t('alarm'),
                       onPressed: widget.onAlarm,
-                      icon: const Icon(Icons.alarm_add_outlined, color: Colors.white),
+                      icon: const Icon(
+                        Icons.alarm_add_outlined,
+                        color: Colors.white,
+                      ),
                       style: IconButton.styleFrom(
                         backgroundColor: Colors.white.withValues(alpha: 0.16),
                       ),
@@ -1600,7 +1770,8 @@ class _HomePageState extends State<HomePage> {
                         transitionBuilder: (child, a) => FadeTransition(
                           opacity: a,
                           child: ScaleTransition(
-                            scale: Tween<double>(begin: 0.92, end: 1).animate(a),
+                            scale: Tween<double>(begin: 0.92, end: 1)
+                                .animate(a),
                             child: child,
                           ),
                         ),
@@ -1609,7 +1780,8 @@ class _HomePageState extends State<HomePage> {
                           key: const ValueKey('cal'),
                           focused: _focused,
                           selected: _selected,
-                          onFocused: (d) => setState(() => _focused = d),
+                          onFocused: (d) =>
+                              setState(() => _focused = d),
                           onSelected: (s, f) => setState(() {
                             _selected = s;
                             _focused = f;
@@ -1727,7 +1899,8 @@ class _HomePageState extends State<HomePage> {
         ),
         const SizedBox(height: 10),
         Text(
-          '${_now.year}-${two(_now.month)}-${two(_now.day)} ${wdFull(_now.weekday, l.isZh)}',
+          '${_now.year}-${two(_now.month)}-${two(_now.day)} '
+              '${wdFull(_now.weekday, l.isZh)}',
           style: const TextStyle(
             color: Color(0xB3FFFFFF),
             fontSize: 13,
@@ -1738,7 +1911,11 @@ class _HomePageState extends State<HomePage> {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.touch_app_outlined, size: 12, color: Color(0x80FFFFFF)),
+            const Icon(
+              Icons.touch_app_outlined,
+              size: 12,
+              color: Color(0x80FFFFFF),
+            ),
             const SizedBox(width: 4),
             Text(
               l.t(_cal ? 'tapTime' : 'tapCalendar'),
@@ -1794,7 +1971,9 @@ class _HomePageState extends State<HomePage> {
           return GlassCard(
             icon: Icons.wb_cloudy_outlined,
             title: l.t('weather'),
-            value: l.t(widget.weather.error == 'api' ? 'wUnavailable' : 'wNetwork'),
+            value: l.t(
+              widget.weather.error == 'api' ? 'wUnavailable' : 'wNetwork',
+            ),
             subtitle: l.t('wRetry'),
             onTap: () => showWeatherSheet(context, widget.weather),
           );
@@ -1802,16 +1981,16 @@ class _HomePageState extends State<HomePage> {
         return GlassCard(
           icon: Icons.wb_cloudy_outlined,
           title: l.t('weather'),
-          value: '${s.now.temp}°C  ${l.isZh ? s.now.desc : descEn(s.now.desc)}',
-          subtitle: '${l.t('humidity')} ${s.now.humidity}% · ${s.now.windDir} ${s.now.windPower}',
+          value: '${s.now.temp}°C  '
+              '${l.isZh ? s.now.desc : descEn(s.now.desc)}',
+          subtitle: '${l.t('humidity')} ${s.now.humidity}% · '
+              '${s.now.windDir} ${s.now.windPower}',
           onTap: () => showWeatherSheet(context, widget.weather),
         );
       },
     );
   }
 }
-
-/* --------------------------------- 天气页 --------------------------------- */
 
 class WeatherPage extends StatelessWidget {
   const WeatherPage({super.key, required this.weather});
@@ -1874,7 +2053,9 @@ class WeatherPage extends StatelessWidget {
                   GlassCard(
                     icon: Icons.cloud_off,
                     title: l.t('weather'),
-                    value: l.t(weather.error == 'api' ? 'wUnavailable' : 'wNetwork'),
+                    value: l.t(
+                      weather.error == 'api' ? 'wUnavailable' : 'wNetwork',
+                    ),
                     subtitle: l.t('wRetry'),
                     onImage: false,
                     onTap: () => weather.refresh(force: true),
@@ -1883,7 +2064,8 @@ class WeatherPage extends StatelessWidget {
                     GlassCard(
                       icon: Icons.wb_sunny_outlined,
                       title: l.t('wCurrent'),
-                      value: '${s.now.temp}°C  ${l.isZh ? s.now.desc : descEn(s.now.desc)}',
+                      value: '${s.now.temp}°C  '
+                          '${l.isZh ? s.now.desc : descEn(s.now.desc)}',
                       subtitle: '${s.now.city} · ${s.now.time}',
                       onImage: false,
                     ),
@@ -1933,8 +2115,6 @@ class WeatherPage extends StatelessWidget {
   }
 }
 
-/* --------------------------------- 日历页 --------------------------------- */
-
 class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key});
 
@@ -1953,7 +2133,10 @@ class _CalendarPageState extends State<CalendarPage> {
     final cs = context.cs;
     final month = holidays.forMonth(_focused.year, _focused.month, _scopes);
     final days = month.keys.toList()..sort();
-    final picked = holidays.forDate(_selected).where((h) => _scopes.contains(h.scope)).toList();
+    final picked = holidays
+        .forDate(_selected)
+        .where((h) => _scopes.contains(h.scope))
+        .toList();
 
     return SafeArea(
       child: ListView(
@@ -1975,7 +2158,8 @@ class _CalendarPageState extends State<CalendarPage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${ymd(_selected)} ${wdFull(_selected.weekday, l.isZh)}',
+                      '${ymd(_selected)} '
+                          '${wdFull(_selected.weekday, l.isZh)}',
                       style: TextStyle(
                         color: cs.onSurface.withValues(alpha: 0.5),
                         fontSize: 12,
@@ -2007,9 +2191,14 @@ class _CalendarPageState extends State<CalendarPage> {
                   children: [
                     IconButton(
                       onPressed: () => setState(() {
-                        _focused = DateTime(_focused.year, _focused.month - 1, 1);
+                        _focused =
+                            DateTime(_focused.year, _focused.month - 1, 1);
                       }),
-                      icon: Icon(Icons.chevron_left, size: 18, color: cs.onSurface),
+                      icon: Icon(
+                        Icons.chevron_left,
+                        size: 18,
+                        color: cs.onSurface,
+                      ),
                     ),
                     Expanded(
                       child: Center(
@@ -2025,9 +2214,14 @@ class _CalendarPageState extends State<CalendarPage> {
                     ),
                     IconButton(
                       onPressed: () => setState(() {
-                        _focused = DateTime(_focused.year, _focused.month + 1, 1);
+                        _focused =
+                            DateTime(_focused.year, _focused.month + 1, 1);
                       }),
-                      icon: Icon(Icons.chevron_right, size: 18, color: cs.onSurface),
+                      icon: Icon(
+                        Icons.chevron_right,
+                        size: 18,
+                        color: cs.onSurface,
+                      ),
                     ),
                   ],
                 ),
@@ -2062,9 +2256,14 @@ class _CalendarPageState extends State<CalendarPage> {
                       color: cs.primary.withValues(alpha: 0.28),
                       shape: BoxShape.circle,
                     ),
-                    todayTextStyle: TextStyle(color: cs.onSurface, fontSize: 13),
-                    selectedDecoration: BoxDecoration(color: cs.primary, shape: BoxShape.circle),
-                    selectedTextStyle: TextStyle(color: cs.onPrimary, fontSize: 13),
+                    todayTextStyle:
+                    TextStyle(color: cs.onSurface, fontSize: 13),
+                    selectedDecoration: BoxDecoration(
+                      color: cs.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    selectedTextStyle:
+                    TextStyle(color: cs.onPrimary, fontSize: 13),
                   ),
                   calendarBuilders: CalendarBuilders<Holiday>(
                     dowBuilder: (c, d) => Center(
@@ -2125,12 +2324,20 @@ class _CalendarPageState extends State<CalendarPage> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.celebration_outlined, size: 16, color: cs.primary),
+                  Icon(
+                    Icons.celebration_outlined,
+                    size: 16,
+                    color: cs.primary,
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       picked.map((h) => h.name(l.isZh)).join(' · '),
-                      style: TextStyle(color: cs.onSurface, fontSize: 12, height: 1.5),
+                      style: TextStyle(
+                        color: cs.onSurface,
+                        fontSize: 12,
+                        height: 1.5,
+                      ),
                     ),
                   ),
                 ],
@@ -2193,7 +2400,8 @@ class _CalendarPageState extends State<CalendarPage> {
                                     child: Text(
                                       h.name(l.isZh),
                                       style: TextStyle(
-                                        color: cs.onSurface.withValues(alpha: 0.85),
+                                        color: cs.onSurface
+                                            .withValues(alpha: 0.85),
                                         fontSize: 12,
                                       ),
                                     ),
@@ -2201,7 +2409,8 @@ class _CalendarPageState extends State<CalendarPage> {
                                   Text(
                                     holidays.label(h.scope, l.isZh),
                                     style: TextStyle(
-                                      color: cs.onSurface.withValues(alpha: 0.35),
+                                      color: cs.onSurface
+                                          .withValues(alpha: 0.35),
                                       fontSize: 10,
                                     ),
                                   ),
@@ -2219,8 +2428,6 @@ class _CalendarPageState extends State<CalendarPage> {
     );
   }
 }
-
-/* --------------------------------- 树洞页 --------------------------------- */
 
 class TreeHolePage extends StatefulWidget {
   const TreeHolePage({super.key});
@@ -2240,7 +2447,12 @@ class _TreeHolePageState extends State<TreeHolePage> {
     if (!mounted) return;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(m), behavior: SnackBarBehavior.floating));
+      ..showSnackBar(
+        SnackBar(
+          content: Text(m),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
   }
 
   Future<void> _match() async {
@@ -2295,7 +2507,10 @@ class _TreeHolePageState extends State<TreeHolePage> {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(ctx.t('sayHi'))),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(ctx.t('sayHi')),
+          ),
         ],
       ),
     );
@@ -2336,7 +2551,10 @@ class _TreeHolePageState extends State<TreeHolePage> {
                     ],
                   ),
                 ),
-                Icon(Icons.forest_outlined, color: cs.onSurface.withValues(alpha: 0.35)),
+                Icon(
+                  Icons.forest_outlined,
+                  color: cs.onSurface.withValues(alpha: 0.35),
+                ),
               ],
             ),
             const SizedBox(height: 20),
@@ -2348,13 +2566,20 @@ class _TreeHolePageState extends State<TreeHolePage> {
                 style: FilledButton.styleFrom(
                   backgroundColor: cs.onSurface,
                   foregroundColor: cs.surface,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(26),
+                  ),
                 ),
                 onPressed: _loading ? null : _match,
                 icon: Icon(_loading ? Icons.hourglass_bottom : Icons.shuffle),
                 label: Text(
-                  _loading ? l.t('matching') : (_cur == null ? l.t('match') : l.t('rematch')),
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                  _loading
+                      ? l.t('matching')
+                      : (_cur == null ? l.t('match') : l.t('rematch')),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
@@ -2377,7 +2602,10 @@ class _TreeHolePageState extends State<TreeHolePage> {
           const SizedBox(height: 18),
           Text(
             l.t('matching'),
-            style: TextStyle(color: cs.onSurface.withValues(alpha: 0.5), fontSize: 12),
+            style: TextStyle(
+              color: cs.onSurface.withValues(alpha: 0.5),
+              fontSize: 12,
+            ),
           ),
         ],
       );
@@ -2387,13 +2615,19 @@ class _TreeHolePageState extends State<TreeHolePage> {
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.nightlight_round,
-              size: 46, color: cs.onSurface.withValues(alpha: 0.22)),
+          Icon(
+            Icons.nightlight_round,
+            size: 46,
+            color: cs.onSurface.withValues(alpha: 0.22),
+          ),
           const SizedBox(height: 16),
           Text(
             l.t('treeEmpty'),
             textAlign: TextAlign.center,
-            style: TextStyle(color: cs.onSurface.withValues(alpha: 0.5), fontSize: 13),
+            style: TextStyle(
+              color: cs.onSurface.withValues(alpha: 0.5),
+              fontSize: 13,
+            ),
           ),
         ],
       );
@@ -2414,8 +2648,10 @@ class _TreeHolePageState extends State<TreeHolePage> {
               CircleAvatar(
                 radius: 18,
                 backgroundColor: cs.onSurface.withValues(alpha: 0.1),
-                child: Text(p.alias.substring(0, 1),
-                    style: TextStyle(color: cs.onSurface, fontSize: 14)),
+                child: Text(
+                  p.alias.substring(0, 1),
+                  style: TextStyle(color: cs.onSurface, fontSize: 14),
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -2442,14 +2678,18 @@ class _TreeHolePageState extends State<TreeHolePage> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: cs.onSurface.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
                   l.t('anon'),
-                  style: TextStyle(color: cs.onSurface.withValues(alpha: 0.55), fontSize: 10),
+                  style: TextStyle(
+                    color: cs.onSurface.withValues(alpha: 0.55),
+                    fontSize: 10,
+                  ),
                 ),
               ),
             ],
@@ -2457,7 +2697,11 @@ class _TreeHolePageState extends State<TreeHolePage> {
           const SizedBox(height: 16),
           Text(
             '「${p.text(l.isZh)}」',
-            style: TextStyle(color: cs.onSurface, fontSize: 16, height: 1.8),
+            style: TextStyle(
+              color: cs.onSurface,
+              fontSize: 16,
+              height: 1.8,
+            ),
           ),
           const SizedBox(height: 20),
           SizedBox(
@@ -2466,8 +2710,12 @@ class _TreeHolePageState extends State<TreeHolePage> {
             child: OutlinedButton(
               style: OutlinedButton.styleFrom(
                 foregroundColor: cs.onSurface,
-                side: BorderSide(color: cs.onSurface.withValues(alpha: 0.25)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(23)),
+                side: BorderSide(
+                  color: cs.onSurface.withValues(alpha: 0.25),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(23),
+                ),
               ),
               onPressed: _applied
                   ? (_connected ? () => _snack(l.t('connectedTap')) : null)
@@ -2485,8 +2733,6 @@ class _TreeHolePageState extends State<TreeHolePage> {
     );
   }
 }
-
-/* --------------------------------- 设置页 --------------------------------- */
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key, required this.onAlarm});
@@ -2509,7 +2755,9 @@ class _SettingsPageState extends State<SettingsPage> {
     if (!mounted) return;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(m), behavior: SnackBarBehavior.floating));
+      ..showSnackBar(
+        SnackBar(content: Text(m), behavior: SnackBarBehavior.floating),
+      );
   }
 
   Future<int> _dirSize(Directory dir) async {
@@ -2535,7 +2783,8 @@ class _SettingsPageState extends State<SettingsPage> {
     final dir = await getApplicationDocumentsDirectory();
     final dot = src.lastIndexOf('.');
     final ext = dot >= 0 ? src.substring(dot) : '';
-    final dest = File('${dir.path}/${name}_${DateTime.now().millisecondsSinceEpoch}$ext');
+    final dest =
+    File('${dir.path}/${name}_${DateTime.now().millisecondsSinceEpoch}$ext');
     await File(src).copy(dest.path);
     return dest.path;
   }
@@ -2569,7 +2818,10 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _clearCache() async {
-    final keep = {AppStore.I.wallpaper, AppStore.I.ringtone}.whereType<String>().toSet();
+    final keep = <String>{
+      if (AppStore.I.wallpaper != null) AppStore.I.wallpaper!,
+      if (AppStore.I.ringtone != null) AppStore.I.ringtone!,
+    };
     try {
       for (final dir in [
         await getTemporaryDirectory(),
@@ -2654,7 +2906,11 @@ class _SettingsPageState extends State<SettingsPage> {
       _snack(context.t('bLocked'));
       return;
     }
-    final v = await showBirthday(context, initial: store.birthday, allowCancel: true);
+    final v = await showBirthday(
+      context,
+      initial: store.birthday,
+      allowCancel: true,
+    );
     if (v == null) return;
     await store.setBirthday(v);
     _snack(v);
@@ -2671,12 +2927,19 @@ class _SettingsPageState extends State<SettingsPage> {
         children: [
           Text(
             l.t('settingsTitle'),
-            style: TextStyle(color: cs.onSurface, fontSize: 24, fontWeight: FontWeight.w700),
+            style: TextStyle(
+              color: cs.onSurface,
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             l.t('settingsSub'),
-            style: TextStyle(color: cs.onSurface.withValues(alpha: 0.5), fontSize: 12),
+            style: TextStyle(
+              color: cs.onSurface.withValues(alpha: 0.5),
+              fontSize: 12,
+            ),
           ),
           const SizedBox(height: 20),
           _Tile(
@@ -2702,7 +2965,8 @@ class _SettingsPageState extends State<SettingsPage> {
           _Tile(
             icon: Icons.alarm,
             title: l.t('alarm'),
-            value: '${two(s.alarmHour)}:${two(s.alarmMinute)} · ${l.t('dailyAlarm')}',
+            value: '${two(s.alarmHour)}:${two(s.alarmMinute)} · '
+                '${l.t('dailyAlarm')}',
             onTap: widget.onAlarm,
           ),
           _Tile(
@@ -2716,7 +2980,9 @@ class _SettingsPageState extends State<SettingsPage> {
           _Tile(
             icon: Icons.wallpaper_outlined,
             title: l.t('wallpaper'),
-            value: s.wallpaper == null ? l.t('wallpaperDefault') : l.t('wallpaperLocal'),
+            value: s.wallpaper == null
+                ? l.t('wallpaperDefault')
+                : l.t('wallpaperLocal'),
             buttons: [
               (l.t('changeWallpaper'), _wallpaper),
               (l.t('resetDefault'), () => AppStore.I.setWallpaper(null)),
@@ -2725,7 +2991,9 @@ class _SettingsPageState extends State<SettingsPage> {
           _Tile(
             icon: Icons.music_note_outlined,
             title: l.t('ringtone'),
-            value: s.ringtone == null ? l.t('ringtoneDefault') : l.t('ringtoneLocal'),
+            value: s.ringtone == null
+                ? l.t('ringtoneDefault')
+                : l.t('ringtoneLocal'),
             buttons: [
               (l.t('changeRingtone'), _ringtone),
               (l.t('resetDefault'), () => AppStore.I.setRingtone(null)),
@@ -2747,7 +3015,10 @@ class _SettingsPageState extends State<SettingsPage> {
           Center(
             child: Text(
               'Not alone 2.0.0',
-              style: TextStyle(color: cs.onSurface.withValues(alpha: 0.25), fontSize: 11),
+              style: TextStyle(
+                color: cs.onSurface.withValues(alpha: 0.25),
+                fontSize: 11,
+              ),
             ),
           ),
         ],
@@ -2806,10 +3077,17 @@ class _Tile extends StatelessWidget {
               if (action != null)
                 TextButton(
                   onPressed: onTap,
-                  child: Text(action!, style: TextStyle(color: cs.primary, fontSize: 12)),
+                  child: Text(
+                    action!,
+                    style: TextStyle(color: cs.primary, fontSize: 12),
+                  ),
                 )
               else if (onTap != null)
-                Icon(Icons.chevron_right, size: 18, color: cs.onSurface.withValues(alpha: 0.35)),
+                Icon(
+                  Icons.chevron_right,
+                  size: 18,
+                  color: cs.onSurface.withValues(alpha: 0.35),
+                ),
             ],
           ),
           const SizedBox(height: 6),
@@ -2831,7 +3109,10 @@ class _Tile extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     footnote!,
-                    style: TextStyle(color: cs.primary.withValues(alpha: 0.8), fontSize: 10),
+                    style: TextStyle(
+                      color: cs.primary.withValues(alpha: 0.8),
+                      fontSize: 10,
+                    ),
                   ),
                 ],
               ],
@@ -2850,14 +3131,19 @@ class _Tile extends StatelessWidget {
                         child: OutlinedButton(
                           style: OutlinedButton.styleFrom(
                             foregroundColor: cs.onSurface,
-                            side: BorderSide(color: cs.onSurface.withValues(alpha: 0.22)),
+                            side: BorderSide(
+                              color: cs.onSurface.withValues(alpha: 0.22),
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20),
                             ),
                             padding: EdgeInsets.zero,
                           ),
                           onPressed: b.$2,
-                          child: Text(b.$1, style: const TextStyle(fontSize: 12)),
+                          child: Text(
+                            b.$1,
+                            style: const TextStyle(fontSize: 12),
+                          ),
                         ),
                       ),
                     ),
@@ -2870,8 +3156,6 @@ class _Tile extends StatelessWidget {
     );
   }
 }
-
-/* ---------------------------------- 弹窗 ---------------------------------- */
 
 Future<void> showCare(BuildContext context) {
   return showDialog<void>(
@@ -2887,7 +3171,11 @@ Future<void> showCare(BuildContext context) {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Icon(Icons.favorite_rounded, color: Color(0xFFFF8A9B), size: 26),
+            const Icon(
+              Icons.favorite_rounded,
+              color: Color(0xFFFF8A9B),
+              size: 26,
+            ),
             const SizedBox(height: 16),
             Text(
               ctx.t('careBody'),
@@ -2905,12 +3193,17 @@ Future<void> showCare(BuildContext context) {
                 style: FilledButton.styleFrom(
                   backgroundColor: ctx.cs.onSurface,
                   foregroundColor: ctx.cs.surface,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
                 ),
                 onPressed: () => Navigator.of(ctx).pop(),
                 child: Text(
                   ctx.t('agree'),
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
@@ -2945,7 +3238,8 @@ class _BirthdayDialog extends StatefulWidget {
 }
 
 class _BirthdayDialogState extends State<_BirthdayDialog> {
-  late final TextEditingController _c = TextEditingController(text: widget.initial ?? '');
+  late final TextEditingController _c =
+  TextEditingController(text: widget.initial ?? '');
   String? _err;
 
   @override
@@ -2993,7 +3287,11 @@ class _BirthdayDialogState extends State<_BirthdayDialog> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       title: Text(
         context.t('bAsk'),
-        style: TextStyle(color: cs.onSurface, fontSize: 17, fontWeight: FontWeight.w600),
+        style: TextStyle(
+          color: cs.onSurface,
+          fontSize: 17,
+          fontWeight: FontWeight.w600,
+        ),
       ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -3017,14 +3315,20 @@ class _BirthdayDialogState extends State<_BirthdayDialog> {
             style: TextStyle(color: cs.onSurface),
             decoration: InputDecoration(
               hintText: '1998-6-1',
-              hintStyle: TextStyle(color: cs.onSurface.withValues(alpha: 0.28)),
+              hintStyle: TextStyle(
+                color: cs.onSurface.withValues(alpha: 0.28),
+              ),
               errorText: _err,
               filled: true,
               fillColor: cs.onSurface.withValues(alpha: 0.06),
               suffixIcon: IconButton(
                 tooltip: context.t('bPick'),
                 onPressed: _pick,
-                icon: Icon(Icons.calendar_month_outlined, size: 20, color: cs.primary),
+                icon: Icon(
+                  Icons.calendar_month_outlined,
+                  size: 20,
+                  color: cs.primary,
+                ),
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
@@ -3061,7 +3365,11 @@ class _BirthdayDialogState extends State<_BirthdayDialog> {
   }
 }
 
-Future<(int, int)?> showAlarmSheet(BuildContext context, int hour, int minute) {
+Future<(int, int)?> showAlarmSheet(
+    BuildContext context,
+    int hour,
+    int minute,
+    ) {
   return showModalBottomSheet<(int, int)>(
     context: context,
     isScrollControlled: true,
@@ -3072,7 +3380,8 @@ Future<(int, int)?> showAlarmSheet(BuildContext context, int hour, int minute) {
 
 class _AlarmSheet extends StatefulWidget {
   const _AlarmSheet({required this.hour, required this.minute});
-  final int hour, minute;
+  final int hour;
+  final int minute;
 
   @override
   State<_AlarmSheet> createState() => _AlarmSheetState();
@@ -3081,8 +3390,10 @@ class _AlarmSheet extends StatefulWidget {
 class _AlarmSheetState extends State<_AlarmSheet> {
   late int _h = widget.hour.clamp(0, 23);
   late int _m = widget.minute.clamp(0, 59);
-  late final FixedExtentScrollController _hc = FixedExtentScrollController(initialItem: _h);
-  late final FixedExtentScrollController _mc = FixedExtentScrollController(initialItem: _m);
+  late final FixedExtentScrollController _hc =
+  FixedExtentScrollController(initialItem: _h);
+  late final FixedExtentScrollController _mc =
+  FixedExtentScrollController(initialItem: _m);
 
   @override
   void dispose() {
@@ -3091,7 +3402,11 @@ class _AlarmSheetState extends State<_AlarmSheet> {
     super.dispose();
   }
 
-  Widget _wheel(int count, FixedExtentScrollController c, ValueChanged<int> onChanged) {
+  Widget _wheel(
+      int count,
+      FixedExtentScrollController c,
+      ValueChanged<int> onChanged,
+      ) {
     final color = context.cs.onSurface;
     return SizedBox(
       width: 84,
@@ -3110,7 +3425,11 @@ class _AlarmSheetState extends State<_AlarmSheet> {
           builder: (c, i) => Center(
             child: Text(
               two(i),
-              style: TextStyle(color: color, fontSize: 26, fontWeight: FontWeight.w500),
+              style: TextStyle(
+                color: color,
+                fontSize: 26,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ),
@@ -3171,7 +3490,10 @@ class _AlarmSheetState extends State<_AlarmSheet> {
             const SizedBox(height: 8),
             Text(
               '${two(_h)}:${two(_m)}',
-              style: TextStyle(color: cs.onSurface.withValues(alpha: 0.55), fontSize: 12),
+              style: TextStyle(
+                color: cs.onSurface.withValues(alpha: 0.55),
+                fontSize: 12,
+              ),
             ),
             const SizedBox(height: 16),
             SizedBox(
@@ -3181,12 +3503,17 @@ class _AlarmSheetState extends State<_AlarmSheet> {
                 style: FilledButton.styleFrom(
                   backgroundColor: cs.onSurface,
                   foregroundColor: cs.surface,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
                 ),
                 onPressed: () => Navigator.of(context).pop((_h, _m)),
                 child: Text(
                   context.t('save'),
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
@@ -3204,7 +3531,8 @@ Future<void> showWakeUp(BuildContext context, String quote) {
     barrierLabel: 'alarm',
     barrierColor: Colors.white,
     transitionDuration: const Duration(milliseconds: 420),
-    transitionBuilder: (ctx, a, _, child) => FadeTransition(opacity: a, child: child),
+    transitionBuilder: (ctx, a, _, child) =>
+        FadeTransition(opacity: a, child: child),
     pageBuilder: (ctx, _, __) => Material(
       type: MaterialType.transparency,
       child: Container(
@@ -3227,10 +3555,18 @@ Future<void> showWakeUp(BuildContext context, String quote) {
                     color: Colors.white,
                     shape: BoxShape.circle,
                     boxShadow: [
-                      BoxShadow(color: Color(0x44FFB300), blurRadius: 40, spreadRadius: 12),
+                      BoxShadow(
+                        color: Color(0x44FFB300),
+                        blurRadius: 40,
+                        spreadRadius: 12,
+                      ),
                     ],
                   ),
-                  child: const Icon(Icons.wb_sunny_rounded, size: 52, color: Color(0xFFFFB300)),
+                  child: const Icon(
+                    Icons.wb_sunny_rounded,
+                    size: 52,
+                    color: Color(0xFFFFB300),
+                  ),
                 ),
                 const SizedBox(height: 26),
                 Text(
@@ -3245,7 +3581,11 @@ Future<void> showWakeUp(BuildContext context, String quote) {
                 Text(
                   quote,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 15, height: 1.8, color: Color(0xFF6B5B49)),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    height: 1.8,
+                    color: Color(0xFF6B5B49),
+                  ),
                 ),
                 const Spacer(),
                 SizedBox(
@@ -3255,12 +3595,17 @@ Future<void> showWakeUp(BuildContext context, String quote) {
                     style: FilledButton.styleFrom(
                       backgroundColor: const Color(0xFF2A2118),
                       foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(27)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(27),
+                      ),
                     ),
                     onPressed: () => Navigator.of(ctx).pop(),
                     child: Text(
                       ctx.t('wokeUp'),
-                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
@@ -3273,13 +3618,14 @@ Future<void> showWakeUp(BuildContext context, String quote) {
   );
 }
 
-/* ------------------------------ 吹蜡烛蛋糕 ------------------------------ */
-
 Future<void> showCake(BuildContext context, String birthday) {
   return showDialog<void>(
     context: context,
     barrierDismissible: false,
-    builder: (_) => PopScope(canPop: false, child: _CakeDialog(birthday: birthday)),
+    builder: (_) => PopScope(
+      canPop: false,
+      child: _CakeDialog(birthday: birthday),
+    ),
   );
 }
 
@@ -3291,11 +3637,8 @@ class _CakeDialog extends StatefulWidget {
   State<_CakeDialog> createState() => _CakeDialogState();
 }
 
-class _CakeDialogState extends State<_CakeDialog> with TickerProviderStateMixin {
-  static const int _tick = 80;
-  static const double _thr = -22;
-  static const int _need = 480;
-
+class _CakeDialogState extends State<_CakeDialog>
+    with TickerProviderStateMixin {
   late final AnimationController _flicker = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 1400),
@@ -3306,89 +3649,19 @@ class _CakeDialogState extends State<_CakeDialog> with TickerProviderStateMixin 
     duration: const Duration(milliseconds: 900),
   );
 
-  final AudioRecorder _rec = AudioRecorder();
-  final ValueNotifier<double> _meter = ValueNotifier<double>(0);
-
-  StreamSubscription<Amplitude>? _amp;
-  String? _tmp;
-  bool _micOk = false;
   bool _out = false;
-  int _loud = 0;
   bool _popped = false;
 
   @override
-  void initState() {
-    super.initState();
-    _listen();
-  }
-
-  @override
   void dispose() {
-    _amp?.cancel();
-    _amp = null;
-    unawaited(_shutdown());
     _flicker.dispose();
     _blow.dispose();
-    _meter.dispose();
     super.dispose();
-  }
-
-  Future<void> _shutdown() async {
-    try {
-      if (await _rec.isRecording()) await _rec.stop();
-    } catch (_) {}
-    try {
-      await _rec.dispose();
-    } catch (_) {}
-    final p = _tmp;
-    if (p != null) {
-      try {
-        final f = File(p);
-        if (await f.exists()) await f.delete();
-      } catch (_) {}
-    }
-  }
-
-  Future<void> _listen() async {
-    try {
-      if (!await _rec.hasPermission()) {
-        if (mounted) setState(() => _micOk = false);
-        return;
-      }
-      final dir = await getTemporaryDirectory();
-      _tmp = '${dir.path}/blow_${DateTime.now().microsecondsSinceEpoch}.m4a';
-      await _rec.start(
-        const RecordConfig(encoder: AudioEncoder.aacLc, sampleRate: 44100, numChannels: 1),
-        path: _tmp!,
-      );
-      _amp = _rec.onAmplitudeChanged(const Duration(milliseconds: _tick)).listen(_onAmp);
-      if (mounted) setState(() => _micOk = true);
-    } catch (e) {
-      debugPrint('mic: $e');
-      if (mounted) setState(() => _micOk = false);
-    }
-  }
-
-  void _onAmp(Amplitude a) {
-    if (_out || !mounted) return;
-    _meter.value = ((a.current + 60) / 60).clamp(0.0, 1.0);
-    if (a.current >= _thr) {
-      _loud += _tick;
-    } else {
-      _loud = max(0, _loud - _tick ~/ 2);
-    }
-    if (_loud >= _need) _extinguish();
   }
 
   Future<void> _extinguish() async {
     if (_out) return;
     setState(() => _out = true);
-    _amp?.cancel();
-    _amp = null;
-    _meter.value = 0;
-    try {
-      if (await _rec.isRecording()) await _rec.stop();
-    } catch (_) {}
     await _blow.forward();
     await Future<void>.delayed(const Duration(milliseconds: 1200));
     if (!mounted || _popped) return;
@@ -3452,7 +3725,10 @@ class _CakeDialogState extends State<_CakeDialog> with TickerProviderStateMixin 
               const SizedBox(height: 4),
               Text(
                 l.t('bNth', {'n': '${age + 1}'}),
-                style: const TextStyle(color: Color(0x66FFFFFF), fontSize: 11),
+                style: const TextStyle(
+                  color: Color(0x66FFFFFF),
+                  fontSize: 11,
+                ),
               ),
               SizedBox(
                 width: double.infinity,
@@ -3465,10 +3741,8 @@ class _CakeDialogState extends State<_CakeDialog> with TickerProviderStateMixin 
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 260),
                 child: Text(
-                  _out
-                      ? l.t('candlesOut')
-                      : (_micOk ? l.t('cakeBlow') : l.t('micDenied')),
-                  key: ValueKey('$_out-$_micOk'),
+                  _out ? l.t('candlesOut') : l.t('blowCandle'),
+                  key: ValueKey('$_out'),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: _out
@@ -3479,19 +3753,6 @@ class _CakeDialogState extends State<_CakeDialog> with TickerProviderStateMixin 
                   ),
                 ),
               ),
-              const SizedBox(height: 10),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(3),
-                child: ValueListenableBuilder<double>(
-                  valueListenable: _meter,
-                  builder: (c, v, _) => LinearProgressIndicator(
-                    value: v,
-                    minHeight: 4,
-                    backgroundColor: Colors.white.withValues(alpha: 0.08),
-                    valueColor: const AlwaysStoppedAnimation(Color(0xFFFFD54F)),
-                  ),
-                ),
-              ),
               const SizedBox(height: 14),
               SizedBox(
                 width: double.infinity,
@@ -3499,11 +3760,18 @@ class _CakeDialogState extends State<_CakeDialog> with TickerProviderStateMixin 
                 child: OutlinedButton(
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.white,
-                    side: BorderSide(color: Colors.white.withValues(alpha: 0.25)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(23)),
+                    side: BorderSide(
+                      color: Colors.white.withValues(alpha: 0.25),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(23),
+                    ),
                   ),
                   onPressed: _out ? null : _extinguish,
-                  child: Text(l.t('blowManual'), style: const TextStyle(fontSize: 13)),
+                  child: Text(
+                    _out ? l.t('candlesOut') : l.t('blowCandle'),
+                    style: const TextStyle(fontSize: 13),
+                  ),
                 ),
               ),
             ],
@@ -3521,11 +3789,13 @@ class _CakePainter extends CustomPainter {
   final Animation<double> flicker;
   final Animation<double> blow;
 
-  Path _flame(Offset b, double h, double w, double tilt) => Path()
-    ..moveTo(b.dx, b.dy - h)
-    ..quadraticBezierTo(b.dx + w, b.dy - h * 0.5, b.dx + tilt, b.dy)
-    ..quadraticBezierTo(b.dx - w, b.dy - h * 0.5, b.dx, b.dy - h)
-    ..close();
+  Path _flame(Offset b, double h, double w, double tilt) {
+    return Path()
+      ..moveTo(b.dx, b.dy - h)
+      ..quadraticBezierTo(b.dx + w, b.dy - h * 0.5, b.dx + tilt, b.dy)
+      ..quadraticBezierTo(b.dx - w, b.dy - h * 0.5, b.dx, b.dy - h)
+      ..close();
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -3542,7 +3812,10 @@ class _CakePainter extends CustomPainter {
       height: h * 0.13,
     );
     canvas.drawOval(plateRect, Paint()..color = const Color(0x1FFFFFFF));
-    canvas.drawOval(plateRect.deflate(6), Paint()..color = const Color(0x0DFFFFFF));
+    canvas.drawOval(
+      plateRect.deflate(6),
+      Paint()..color = const Color(0x0DFFFFFF),
+    );
 
     final bodyW = w * 0.56;
     final bodyH = h * 0.34;
@@ -3622,6 +3895,7 @@ class _CakePainter extends CustomPainter {
       final x = cx + i * bodyW * 0.26;
       final top = candleBottom - candleH;
       final candleRect = Rect.fromLTWH(x - 4.5, top, 9, candleH);
+
       canvas.drawRRect(
         RRect.fromRectAndRadius(candleRect, const Radius.circular(3)),
         Paint()
@@ -3633,6 +3907,7 @@ class _CakePainter extends CustomPainter {
                 : const [Color(0xFFB3E5FC), Color(0xFF4FC3F7)],
           ).createShader(candleRect),
       );
+
       canvas.drawLine(
         Offset(x, top),
         Offset(x, top - 6),
@@ -3662,7 +3937,8 @@ class _CakePainter extends CustomPainter {
             ).createShader(glowRect),
         );
 
-        final outerRect = Rect.fromLTWH(x - 14, base.dy - fh - 6, 28, fh + 10);
+        final outerRect =
+        Rect.fromLTWH(x - 14, base.dy - fh - 6, 28, fh + 10);
         canvas.drawPath(
           _flame(base, fh, fw, tilt),
           Paint()
