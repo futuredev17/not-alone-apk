@@ -1,0 +1,41 @@
+#!/bin/bash
+FILE_PATH=$(find ~/.pub-cache -path "*record-4.4.0/android/build.gradle" | head -n 1)
+if [ -n "$FILE_PATH" ]; then
+cat << 'EOF' > "$FILE_PATH"
+group 'com.llfbandit.record'
+version '1.0-SNAPSHOT'
+
+buildscript {
+    ext.kotlin_version = '1.9.0'
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.1.0'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+android {
+    namespace 'com.llfbandit.record'  // 
+    compileSdk 35
+    defaultConfig {
+        minSdk 21
+        targetSdk 35
+    }
+}
+
+repositories {
+    google()
+    mavenCentral()
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+}
+EOF
+fi
