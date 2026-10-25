@@ -21,18 +21,11 @@ jobs:
 
       - run: flutter pub get
       
-      - run: flutter pub add record:5.0.3
-
-      - name: Fix record plugin
+      - name: Force fix record plugin SDK
         run: |
-          FIND_PATH=$(find ~/.pub-cache -path "*record_android*/android/build.gradle" | head -n 1)
-          if [ -n "$FIND_PATH" ]; then
-            sed -i 's/flutter.compileSdkVersion/flutter.compileSdkVersion ?: 35/g' "$FIND_PATH"
-            sed -i 's/ext.flutter.compileSdkVersion/ext.flutter.compileSdkVersion ?: 35/g' "$FIND_PATH"
-            echo "修复成功！"
-          else
-            echo "找不到文件！"
-          fi
+          flutter pub add record:4.4.0
+          find ~/.pub-cache -name "build.gradle" -path "*record*" | xargs sed -i 's/ext.flutter.compileSdkVersion/ext.flutter.compileSdkVersion ?: 35/g'
+          find ~/.pub-cache -name "build.gradle" -path "*record*" | xargs sed -i 's/flutter.compileSdkVersion/flutter.compileSdkVersion ?: 35/g'
 
       - run: flutter build apk --release
 
