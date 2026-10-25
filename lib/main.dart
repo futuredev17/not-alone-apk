@@ -3701,3 +3701,4 @@ class _CakePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_CakePainter old) => false;
+}
