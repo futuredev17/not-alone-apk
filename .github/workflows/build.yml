@@ -20,6 +20,7 @@ jobs:
           channel: 'stable'
 
       - run: flutter pub get
+      - run: flutter pub add record:^5.1.0
       - run: flutter config --no-enable-linux-desktop
 
       - run: flutter build apk --release
