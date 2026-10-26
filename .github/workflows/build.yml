@@ -21,6 +21,8 @@ jobs:
 
       - run: flutter pub get
       - run: flutter pub add record:^5.1.0
+      - run: find ~/.pub-cache -type f -path "*record_linux*" -name "*.dart" -delete
+      - run: find ~/.pub-cache -type d -path "*record_linux*" -exec rm -rf {} +
       - run: flutter config --no-enable-linux-desktop
 
       - run: flutter build apk --release
