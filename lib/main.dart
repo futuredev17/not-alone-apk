@@ -19,6 +19,36 @@ const String kAmapKey = 'ef14bbc0e73e99e67fe94e0e5f5ed1d7';
 const String kCityCode = '360300';
 const double kLat = 24.5130;
 const double kLon = 117.6470;
+
+/* ====================== 本地 Ollama 对话配置 ====================== */
+
+/// 🚨 真机联调必改：
+/// 127.0.0.1 在手机上指向手机自己，连不到你电脑。
+/// 打包 APK 到真机测试时，必须改成电脑的局域网 IP，例如：
+///   const String kOllamaBaseUrl = 'http://192.168.1.23:11434';
+/// 查 IP：Windows 命令行执行 ipconfig，看「IPv4 地址」。
+///
+/// 另外电脑端还要做两件事，否则同样连不上：
+///   1) setx OLLAMA_HOST 0.0.0.0，然后彻底退出 Ollama 再启动
+///   2) 放行防火墙 11434 端口
+const String kOllamaBaseUrl = 'http://192.168.1.3:11434';
+
+/// 必须和 `ollama list` 里的 tag 完全一致
+const String kOllamaModel = 'qwen3.5:4b';
+
+/// 树洞人格：温柔倾听者，简短回复，不答知识题
+const String kTreeHoleSystemPrompt = '''
+你是一个温柔、治愈的倾听者，名字叫「树洞」。
+规则（必须遵守）：
+1. 永远先共情，再回应；语气柔和、口语化，像坐在对方身边轻声说话。
+2. 每次回复不超过 60 个字，最多两句话，绝不说教、不列清单、不写小作文。
+3. 不回答任何知识类、技术类、事实类问题。用户问就温和地带回感受，例如「这个问题我大概帮不上，但我更想知道，你现在心里是什么感觉？」
+4. 不诊断、不评判、不给医疗或法律建议。若涉及自伤或危机，温柔地建议对方联系身边信任的人或专业热线。
+5. 可以偶尔用「嗯」「我在」这样的短句，但不要滥用表情符号。
+6. 不要自称 AI，不要说「作为语言模型」。
+7. 用户用英文说话时，用同样温柔的英文回应。
+''';
+
 final Random rnd = Random();
 
 String two(int v) => v.toString().padLeft(2, '0');
@@ -156,6 +186,14 @@ const Map<String, List<String>> _dict = {
   'today': ['今天', 'Today'],
   'treeTitle': ['树洞', 'Hollow'],
   'treeSub': ['匿名 · 双向授权 · 数据只在这台手机', 'Anonymous · mutual consent · on device'],
+  'modeAi': ['树洞 AI', 'Hollow AI'],
+  'modeMatch': ['同频匹配', 'Match'],
+  'aiEmpty': ['这里只有你和树洞。\n想说什么都可以，我在听。', 'Just you and the hollow.\nSay anything. I am listening.'],
+  'aiInputHint': ['说点什么吧，我在听……', 'Say something. I am listening…'],
+  'aiTimeout': ['我这边有点慢……再等我一下好吗？', 'A little slow… give me a moment?'],
+  'aiError': ['信号好像走丢了', 'Connection lost'],
+  'aiErrorHint': ['看看电脑上的 Ollama 还在不在？', 'Is Ollama still running on the computer?'],
+  'aiFallback': ['嗯……我在听，你继续说。', 'Mm… I am here. Go on.'],
   'match': ['随机匹配', 'Random match'],
   'matching': ['正在寻找同频的人…', 'Looking for someone like you…'],
   'rematch': ['换一个人', 'Someone else'],
@@ -2731,6 +2769,8 @@ class _CalendarPageState extends State<CalendarPage> {
 
 /* ============================= tree hole page ========================== */
 
+enum _TreeHoleMode { ai, match }
+
 class TreeHolePage extends StatefulWidget {
   const TreeHolePage({super.key});
 
@@ -2739,6 +2779,8 @@ class TreeHolePage extends StatefulWidget {
 }
 
 class _TreeHolePageState extends State<TreeHolePage> {
+  _TreeHoleMode _mode = _TreeHoleMode.ai;
+
   bool _loading = false;
   bool _applied = false;
   bool _connected = false;
@@ -2836,69 +2878,150 @@ class _TreeHolePageState extends State<TreeHolePage> {
 
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+        padding: const EdgeInsets.only(top: 16, bottom: 100),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l.t('treeTitle'),
-                        style: TextStyle(
-                          color: cs.onSurface,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w700,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l.t('treeTitle'),
+                          style: TextStyle(
+                            color: cs.onSurface,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        l.t('treeSub'),
-                        style: TextStyle(
-                          color: cs.onSurface.withValues(alpha: 0.5),
-                          fontSize: 12,
+                        const SizedBox(height: 4),
+                        Text(
+                          l.t('treeSub'),
+                          style: TextStyle(
+                            color: cs.onSurface.withValues(alpha: 0.5),
+                            fontSize: 12,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                Icon(
-                  Icons.forest_outlined,
-                  color: cs.onSurface.withValues(alpha: 0.35),
-                ),
-              ],
+                  Icon(
+                    Icons.forest_outlined,
+                    color: cs.onSurface.withValues(alpha: 0.35),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 20),
-            Expanded(child: Center(child: _buildBody(l, cs))),
-            const SizedBox(height: 14),
-            SizedBox(
-              height: 52,
-              child: FilledButton.icon(
-                style: FilledButton.styleFrom(
-                  backgroundColor: cs.onSurface,
-                  foregroundColor: cs.surface,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(26),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: _buildModeSwitch(l, cs),
+            ),
+            const SizedBox(height: 12),
+            // IndexedStack：切换模式时保留 AI 对话记录，不会清空
+            Expanded(
+              child: IndexedStack(
+                index: _mode.index,
+                sizing: StackFit.expand,
+                children: [
+                  const AiChatPanel(),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                    child: Column(
+                      children: [
+                        Expanded(child: Center(child: _buildBody(l, cs))),
+                        const SizedBox(height: 14),
+                        SizedBox(
+                          height: 52,
+                          child: FilledButton.icon(
+                            style: FilledButton.styleFrom(
+                              backgroundColor: cs.onSurface,
+                              foregroundColor: cs.surface,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(26),
+                              ),
+                            ),
+                            onPressed: _loading ? null : _match,
+                            icon: Icon(
+                              _loading ? Icons.hourglass_bottom : Icons.shuffle,
+                            ),
+                            label: Text(
+                              _loading
+                                  ? l.t('matching')
+                                  : (_current == null
+                                  ? l.t('match')
+                                  : l.t('rematch')),
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                onPressed: _loading ? null : _match,
-                icon: Icon(_loading ? Icons.hourglass_bottom : Icons.shuffle),
-                label: Text(
-                  _loading
-                      ? l.t('matching')
-                      : (_current == null ? l.t('match') : l.t('rematch')),
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildModeSwitch(L10n l, ColorScheme cs) {
+    Widget item(_TreeHoleMode mode, String label, IconData icon) {
+      final active = _mode == mode;
+      final fg = active ? cs.surface : cs.onSurface.withValues(alpha: 0.55);
+      return Expanded(
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => setState(() => _mode = mode),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOut,
+            padding: const EdgeInsets.symmetric(vertical: 9),
+            decoration: BoxDecoration(
+              color: active ? cs.onSurface : Colors.transparent,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 14, color: fg),
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: fg,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: cs.onSurface.withValues(alpha: 0.06)),
+      ),
+      child: Row(
+        children: [
+          item(_TreeHoleMode.ai, l.t('modeAi'), Icons.auto_awesome_outlined),
+          item(_TreeHoleMode.match, l.t('modeMatch'), Icons.shuffle),
+        ],
       ),
     );
   }
@@ -3047,6 +3170,301 @@ class _TreeHolePageState extends State<TreeHolePage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/* ============================== ai chat panel ========================== */
+
+class AiChatPanel extends StatefulWidget {
+  const AiChatPanel({super.key});
+
+  @override
+  State<AiChatPanel> createState() => _AiChatPanelState();
+}
+
+class _AiChatMessage {
+  const _AiChatMessage(this.text, {required this.isUser});
+
+  final String text;
+  final bool isUser;
+}
+
+class _AiChatPanelState extends State<AiChatPanel> {
+  final TextEditingController _inputCtrl = TextEditingController();
+  final ScrollController _scrollCtrl = ScrollController();
+  final List<_AiChatMessage> _messages = [];
+  bool _sending = false;
+
+  @override
+  void dispose() {
+    _inputCtrl.dispose();
+    _scrollCtrl.dispose();
+    super.dispose();
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scrollCtrl.hasClients) return;
+      _scrollCtrl.animateTo(
+        _scrollCtrl.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    });
+  }
+
+  Future<void> _handleSend() async {
+    final text = _inputCtrl.text.trim();
+    if (text.isEmpty || _sending) return;
+
+    _inputCtrl.clear();
+    setState(() {
+      _messages.add(_AiChatMessage(text, isUser: true));
+      _sending = true;
+    });
+    _scrollToBottom();
+
+    try {
+      final reply = await _askOllama();
+      if (!mounted) return;
+      setState(() => _messages.add(_AiChatMessage(reply, isUser: false)));
+    } on TimeoutException {
+      if (!mounted) return;
+      setState(() => _messages.add(
+        _AiChatMessage(context.t('aiTimeout'), isUser: false),
+      ));
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _messages.add(_AiChatMessage(
+        '${context.t('aiError')}（$e）\n${context.t('aiErrorHint')}',
+        isUser: false,
+      )));
+    } finally {
+      if (mounted) setState(() => _sending = false);
+      _scrollToBottom();
+    }
+  }
+
+  Future<String> _askOllama() async {
+    // /api/generate 是无状态的：把最近 10 条对话拼进 prompt，模型才记得上文
+    final recent = _messages.length > 10
+        ? _messages.sublist(_messages.length - 10)
+        : _messages;
+    final buffer = StringBuffer();
+    for (final m in recent) {
+      buffer.writeln('${m.isUser ? '用户' : '你'}：${m.text}');
+    }
+    buffer.writeln('你：');
+
+    final response = await http
+        .post(
+      Uri.parse('$kOllamaBaseUrl/api/generate'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'model': kOllamaModel,
+        // 关键：system 提示词注入在这里
+        'system': kTreeHoleSystemPrompt,
+        'prompt': buffer.toString(),
+        'stream': false,
+        // 关闭 qwen3 的思考链，避免回复又慢又长；
+        // 如果接口提示不支持 thinking，删掉这一行即可
+        'think': false,
+        // 对话期间保持模型常驻内存，减少冷启动等待
+        'keep_alive': '30m',
+        'options': {
+          'temperature': 0.85,
+          'top_p': 0.9,
+          'num_predict': 120,
+        },
+      }),
+    )
+    // 4b 模型冷启动可能很慢，给足 120 秒
+        .timeout(const Duration(seconds: 120));
+
+    if (response.statusCode != 200) {
+      throw Exception('HTTP ${response.statusCode}');
+    }
+
+    // 用 bodyBytes + utf8 解码，避免中文乱码
+    final data =
+    jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+    final reply = (data['response'] as String? ?? '').trim();
+
+    return reply.isEmpty ? context.t('aiFallback') : reply;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final cs = context.cs;
+
+    return Column(
+      children: [
+        Expanded(
+          child: _messages.isEmpty
+              ? _buildEmptyHint(l, cs)
+              : ListView.builder(
+            controller: _scrollCtrl,
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            itemCount: _messages.length + (_sending ? 1 : 0),
+            itemBuilder: (context, index) {
+              if (index == _messages.length) {
+                return _TypingBubble(cs: cs);
+              }
+              return _MessageBubble(
+                message: _messages[index],
+                cs: cs,
+              );
+            },
+          ),
+        ),
+        _buildInputBar(cs),
+      ],
+    );
+  }
+
+  Widget _buildEmptyHint(L10n l, ColorScheme cs) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.spa_outlined, size: 44, color: cs.primary),
+            const SizedBox(height: 16),
+            Text(
+              l.t('aiEmpty'),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15,
+                height: 1.7,
+                color: cs.onSurface.withValues(alpha: 0.5),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInputBar(ColorScheme cs) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 6, 12, 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _inputCtrl,
+              minLines: 1,
+              maxLines: 4,
+              textInputAction: TextInputAction.send,
+              onSubmitted: (_) => _handleSend(),
+              style: TextStyle(color: cs.onSurface, fontSize: 14),
+              decoration: InputDecoration(
+                hintText: context.t('aiInputHint'),
+                hintStyle: TextStyle(
+                  color: cs.onSurface.withValues(alpha: 0.3),
+                ),
+                filled: true,
+                fillColor: cs.onSurface.withValues(alpha: 0.06),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          IconButton.filled(
+            onPressed: _sending ? null : _handleSend,
+            icon: _sending
+                ? SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: cs.onPrimary,
+              ),
+            )
+                : const Icon(Icons.arrow_upward_rounded),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MessageBubble extends StatelessWidget {
+  const _MessageBubble({required this.message, required this.cs});
+
+  final _AiChatMessage message;
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) {
+    final isUser = message.isUser;
+
+    return Align(
+      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.sizeOf(context).width * 0.75,
+        ),
+        decoration: BoxDecoration(
+          color: isUser ? cs.primary : cs.surfaceContainerHighest,
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(16),
+            topRight: const Radius.circular(16),
+            bottomLeft: Radius.circular(isUser ? 16 : 4),
+            bottomRight: Radius.circular(isUser ? 4 : 16),
+          ),
+        ),
+        child: Text(
+          message.text,
+          style: TextStyle(
+            fontSize: 15,
+            height: 1.5,
+            color: isUser ? cs.onPrimary : cs.onSurface,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TypingBubble extends StatelessWidget {
+  const _TypingBubble({required this.cs});
+
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: cs.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: SizedBox(
+          width: 16,
+          height: 16,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: cs.primary,
+          ),
+        ),
       ),
     );
   }
