@@ -10,17 +10,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
+import 'package:record/record.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:flutter/foundation.dart';
 
-const String kKey = 'ef14bbc0e73e99e67fe94e0e5f5ed1d7';
-const String kCity = '360300';
+const String kAmapKey = 'ef14bbc0e73e99e67fe94e0e5f5ed1d7';
+const String kCityCode = '360300';
 const double kLat = 24.5130;
 const double kLon = 117.6470;
 final Random rnd = Random();
 
 String two(int v) => v.toString().padLeft(2, '0');
+
 String ymd(DateTime d) => '${d.year}-${two(d.month)}-${two(d.day)}';
 
 DateTime? parseYmd(String input) {
@@ -113,6 +115,8 @@ String descEn(String d) =>
     }[d] ??
         d;
 
+/* ================================ i18n ================================= */
+
 const Map<String, List<String>> _dict = {
   'app': ['Not alone', 'Not alone'],
   'navHome': ['首页', 'Home'],
@@ -120,10 +124,10 @@ const Map<String, List<String>> _dict = {
   'navCalendar': ['日历', 'Calendar'],
   'navTree': ['树洞', 'Hollow'],
   'navSettings': ['设置', 'Settings'],
-  'hiMorning': ['早上好，今天也会有人偷偷想你', 'Good morning. Someone is thinking of you.'],
-  'hiNoon': ['下午好，记得喝口水', 'Good afternoon. Drink some water.'],
-  'hiEvening': ['晚上好，今天辛苦了', 'Good evening. You made it through.'],
-  'hiNight': ['夜深了，早点睡，世界明天再应付', 'Late night. Rest now, the world can wait.'],
+  'greetNight': ['夜深了，早点睡，世界明天再应付', 'Late night. Rest now.'],
+  'greetMorning': ['早上好，今天也会有人偷偷想你', 'Good morning. Someone is thinking of you.'],
+  'greetNoon': ['下午好，记得喝口水', 'Good afternoon. Drink some water.'],
+  'greetEvening': ['晚上好，今天辛苦了', 'Good evening. You made it through.'],
   'tapCalendar': ['点击查看日历', 'Tap for the calendar'],
   'tapTime': ['再点一下回到时间', 'Tap again for the clock'],
   'weather': ['高德天气', 'Weather'],
@@ -135,13 +139,14 @@ const Map<String, List<String>> _dict = {
   'uv': ['紫外线', 'UV index'],
   'feels': ['体感', 'Feels like'],
   'wUnavailable': ['天气暂不可用', 'Weather unavailable'],
-  'wNetwork': ['网络异常，请检查连接', 'Network error'],
+  'wNetwork': ['网络异常，请检查连接后重试', 'Network error. Please retry.'],
   'wRetry': ['重试', 'Retry'],
   'wDetail': ['天气详情', 'Weather details'],
   'wCurrent': ['实时天气', 'Right now'],
   'wHourly': ['未来 12 小时', 'Next 12 hours'],
   'wDaily': ['未来几天', 'Next days'],
   'wExtras': ['逐小时与紫外线来自 Open-Meteo', 'Hourly & UV from Open-Meteo'],
+  'wSource': ['数据来源：高德开放平台', 'Source: Amap Open Platform'],
   'calendarTitle': ['日历', 'Calendar'],
   'holidaysMonth': ['本月节日', 'Holidays this month'],
   'noHolidays': ['本月没有节日', 'No holidays this month'],
@@ -159,10 +164,7 @@ const Map<String, List<String>> _dict = {
   'connectedTap': ['已互相授权 · 去打招呼', 'Connected · say hi'],
   'noReply': ['对方还没有回应，也许 ta 也在犹豫', 'No reply yet. Maybe they hesitate.'],
   'consentTitle': ['对方同意了你的申请', 'They accepted'],
-  'consentBody': [
-    '「{name}」接受了你的双向授权，你们可以匿名互相倾诉了。',
-    '“{name}” accepted. Talk anonymously now.'
-  ],
+  'consentBody': ['「{name}」接受了你的双向授权，你们可以匿名互相倾诉了。', '“{name}” accepted. Talk anonymously now.'],
   'sayHi': ['说点什么', 'Say something'],
   'treeEmpty': ['这个世界很大，总有人和你同频', 'Someone out there matches you.'],
   'anon': ['匿名', 'anon'],
@@ -173,6 +175,8 @@ const Map<String, List<String>> _dict = {
   'theme': ['主题', 'Theme'],
   'themeDark': ['深色', 'Dark'],
   'themeLight': ['浅色', 'Light'],
+  'themeSystem': ['跟随系统', 'System'],
+  'changed': ['已切换', 'Updated'],
   'birthday': ['生日', 'Birthday'],
   'notSet': ['未设置', 'Not set'],
   'bLocked': ['今年已修改过，明年才能再改', 'Changed this year. Try next year.'],
@@ -210,8 +214,10 @@ const Map<String, List<String>> _dict = {
   'hbSub': ['愿新的一岁，你被世界温柔以待。', 'May the world be gentle with you.'],
   'hbSubAdult': ['从今天起，请为自己而活，也请偶尔为自己软弱。', 'Live for yourself now. Be soft sometimes.'],
   'bNth': ['今天是你的第 {n} 个生日', 'Birthday #{n}'],
-  'blowCandle': ['吹灭蜡烛', 'Blow out the candles'],
-  'candlesOut': ['愿望会实现的', 'Your wish will come true'],
+  'cakeBlow': ['对着屏幕轻轻吹气，吹灭蜡烛', 'Blow gently at the screen'],
+  'cakeOut': ['愿望会实现的', 'Your wish will come true'],
+  'cakeManual': ['吹不动了？点这里吹灭', 'Tap to put them out'],
+  'micOff': ['麦克风不可用，点击手动吹灭', 'Microphone unavailable, tap to put them out'],
   'ringTitle': ['该起床啦', 'Time to wake up'],
   'wokeUp': ['我醒了', "I'm up"],
   'alarmSaved': ['闹钟已设置为 {t}', 'Alarm set for {t}'],
@@ -234,149 +240,173 @@ class L10n {
     final pair = _dict[key];
     var s = pair == null ? key : pair[isZh ? 0 : 1];
     if (args != null) {
-      args.forEach((k, v) => s = s.replaceAll('{$k}', v));
+      args.forEach((k, v) {
+        s = s.replaceAll('{$k}', v);
+      });
     }
     return s;
   }
 
-  static L10n of(BuildContext c) =>
-      Localizations.of<L10n>(c, L10n) ?? const L10n(Locale('zh'));
+  static L10n of(BuildContext context) =>
+      Localizations.of<L10n>(context, L10n) ?? const L10n(Locale('zh'));
 
   static const LocalizationsDelegate<L10n> delegate = _L10nDelegate();
-  static const List<Locale> supported = [Locale('zh'), Locale('en')];
+
+  static const List<Locale> supportedLocales = [Locale('zh'), Locale('en')];
 }
 
 class _L10nDelegate extends LocalizationsDelegate<L10n> {
   const _L10nDelegate();
 
   @override
-  bool isSupported(Locale l) => l.languageCode == 'zh' || l.languageCode == 'en';
+  bool isSupported(Locale locale) =>
+      locale.languageCode == 'zh' || locale.languageCode == 'en';
 
   @override
-  Future<L10n> load(Locale l) => SynchronousFuture<L10n>(L10n(l));
+  Future<L10n> load(Locale locale) => SynchronousFuture<L10n>(L10n(locale));
 
   @override
   bool shouldReload(covariant LocalizationsDelegate<L10n> old) => false;
 }
 
 extension AppCtx on BuildContext {
-  L10n get l => L10n.of(this);
+  L10n get l10n => L10n.of(this);
   ColorScheme get cs => Theme.of(this).colorScheme;
-  String t(String k, [Map<String, String>? a]) => L10n.of(this).t(k, a);
+  String t(String key, [Map<String, String>? args]) => L10n.of(this).t(key, args);
 }
 
+/* ============================== app store ============================== */
+
 class AppStore extends ChangeNotifier {
-  AppStore._(this._p);
+  AppStore._(this._prefs);
 
   static late AppStore I;
 
-  static Future<void> load() async =>
-      I = AppStore._(await SharedPreferences.getInstance());
+  static Future<void> load() async {
+    I = AppStore._(await SharedPreferences.getInstance());
+  }
 
-  final SharedPreferences _p;
+  final SharedPreferences _prefs;
 
-  String get localeCode => _p.getString('locale') ?? 'system';
+  String get localeCode => _prefs.getString('locale') ?? 'system';
 
-  Locale? get locale => switch (localeCode) {
-    'zh' => const Locale('zh'),
-    'en' => const Locale('en'),
-    _ => null,
-  };
+  Locale? get locale {
+    switch (localeCode) {
+      case 'zh':
+        return const Locale('zh');
+      case 'en':
+        return const Locale('en');
+      default:
+        return null;
+    }
+  }
 
-  Future<void> setLocale(String v) async {
-    await _p.setString('locale', v);
+  Future<void> setLocale(String code) async {
+    await _prefs.setString('locale', code);
     notifyListeners();
   }
 
-  String get themeCode => _p.getString('theme') ?? 'dark';
+  String get themeCode => _prefs.getString('theme') ?? 'dark';
 
-  ThemeMode get themeMode => switch (themeCode) {
-    'light' => ThemeMode.light,
-    'system' => ThemeMode.system,
-    _ => ThemeMode.dark,
-  };
+  ThemeMode get themeMode {
+    switch (themeCode) {
+      case 'light':
+        return ThemeMode.light;
+      case 'system':
+        return ThemeMode.system;
+      default:
+        return ThemeMode.dark;
+    }
+  }
 
-  Future<void> setTheme(String v) async {
-    await _p.setString('theme', v);
+  Future<void> setTheme(String code) async {
+    await _prefs.setString('theme', code);
     notifyListeners();
   }
 
-  bool get careAccepted => _p.getBool('careAccepted') ?? false;
+  bool get careAccepted => _prefs.getBool('careAccepted') ?? false;
 
   Future<void> acceptCare() async {
-    await _p.setBool('careAccepted', true);
+    await _prefs.setBool('careAccepted', true);
     notifyListeners();
   }
 
-  int get alarmHour => _p.getInt('alarmHour') ?? 7;
-  int get alarmMinute => _p.getInt('alarmMinute') ?? 0;
+  int get alarmHour => _prefs.getInt('alarmHour') ?? 7;
+  int get alarmMinute => _prefs.getInt('alarmMinute') ?? 0;
 
-  Future<void> setAlarm(int h, int m) async {
-    await _p.setInt('alarmHour', h);
-    await _p.setInt('alarmMinute', m);
+  Future<void> setAlarm(int hour, int minute) async {
+    await _prefs.setInt('alarmHour', hour);
+    await _prefs.setInt('alarmMinute', minute);
     notifyListeners();
   }
 
-  String? get birthday => _p.getString('birthday');
-  int get birthdayEditYear => _p.getInt('birthdayEditYear') ?? 0;
+  String? get birthday => _prefs.getString('birthday');
+
+  int get birthdayEditYear => _prefs.getInt('birthdayEditYear') ?? 0;
+
   bool get canEditBirthday =>
       birthday == null || birthdayEditYear < DateTime.now().year;
 
-  Future<void> setBirthday(String v) async {
-    await _p.setString('birthday', v);
-    await _p.setInt('birthdayEditYear', DateTime.now().year);
+  Future<void> setBirthday(String value) async {
+    await _prefs.setString('birthday', value);
+    await _prefs.setInt('birthdayEditYear', DateTime.now().year);
     notifyListeners();
   }
 
-  String? get cakeShownOn => _p.getString('cakeShownOn');
+  String? get cakeShownOn => _prefs.getString('cakeShownOn');
 
-  Future<void> markCakeShown() async =>
-      _p.setString('cakeShownOn', ymd(DateTime.now()));
+  Future<void> markCakeShown() async {
+    await _prefs.setString('cakeShownOn', ymd(DateTime.now()));
+  }
 
-  String? get wallpaper => _p.getString('wallpaper');
-  String? get ringtone => _p.getString('ringtone');
+  String? get wallpaper => _prefs.getString('wallpaper');
+  String? get ringtone => _prefs.getString('ringtone');
 
-  Future<void> setWallpaper(String? v) async {
-    if (v == null) {
-      await _p.remove('wallpaper');
+  Future<void> setWallpaper(String? path) async {
+    if (path == null) {
+      await _prefs.remove('wallpaper');
     } else {
-      await _p.setString('wallpaper', v);
+      await _prefs.setString('wallpaper', path);
     }
     notifyListeners();
   }
 
-  Future<void> setRingtone(String? v) async {
-    if (v == null) {
-      await _p.remove('ringtone');
+  Future<void> setRingtone(String? path) async {
+    if (path == null) {
+      await _prefs.remove('ringtone');
     } else {
-      await _p.setString('ringtone', v);
+      await _prefs.setString('ringtone', path);
     }
     notifyListeners();
   }
 }
 
-class WNow {
-  const WNow({
+/* =============================== weather =============================== */
+
+enum WeatherError { network, api }
+
+class WeatherNow {
+  const WeatherNow({
     required this.city,
     required this.desc,
     required this.temp,
     required this.humidity,
     required this.windDir,
     required this.windPower,
-    required this.time,
+    required this.reportTime,
   });
 
   final String city;
   final String desc;
   final String windDir;
   final String windPower;
-  final String time;
+  final String reportTime;
   final int temp;
   final int humidity;
 }
 
-class WDay {
-  const WDay({
+class WeatherDay {
+  const WeatherDay({
     required this.date,
     required this.dayDesc,
     required this.high,
@@ -389,15 +419,20 @@ class WDay {
   final int low;
 }
 
-class WHour {
-  const WHour({required this.time, required this.temp, required this.rain});
+class WeatherHour {
+  const WeatherHour({
+    required this.time,
+    required this.temp,
+    required this.rain,
+  });
+
   final DateTime time;
   final double temp;
   final int rain;
 }
 
-class WSnap {
-  const WSnap({
+class WeatherSnapshot {
+  const WeatherSnapshot({
     required this.now,
     this.days = const [],
     this.hours = const [],
@@ -405,114 +440,133 @@ class WSnap {
     this.feels,
   });
 
-  final WNow now;
-  final List<WDay> days;
-  final List<WHour> hours;
+  final WeatherNow now;
+  final List<WeatherDay> days;
+  final List<WeatherHour> hours;
   final double? uv;
   final double? feels;
 }
 
-class _WErr implements Exception {
-  const _WErr(this.code);
-  final String code;
+class _Extras {
+  const _Extras({required this.hours, this.uv, this.feels});
+
+  final List<WeatherHour> hours;
+  final double? uv;
+  final double? feels;
 }
 
-String _s(Object? v) => v is String ? v : (v is num ? '$v' : '');
-int _i(Object? v) => v is num ? v.toInt() : int.tryParse(_s(v)) ?? 0;
-double _d(Object? v) => v is num ? v.toDouble() : double.tryParse(_s(v)) ?? 0;
+String _str(Object? v) => v is String ? v : (v is num ? '$v' : '');
+int _int(Object? v) => v is num ? v.toInt() : int.tryParse(_str(v)) ?? 0;
+double _dbl(Object? v) => v is num ? v.toDouble() : double.tryParse(_str(v)) ?? 0;
 
 class WeatherController extends ChangeNotifier {
-  final http.Client _client = http.Client();
+  WeatherController() : _client = http.Client();
 
-  WSnap? data;
-  String? error;
+  final http.Client _client;
+
+  WeatherSnapshot? snapshot;
+  WeatherError? error;
   bool loading = false;
-  DateTime? _last;
+  DateTime? _lastSuccess;
 
   Future<void> refresh({bool force = false}) async {
     if (loading) return;
     if (!force &&
-        _last != null &&
-        DateTime.now().difference(_last!) < const Duration(minutes: 10)) {
+        _lastSuccess != null &&
+        DateTime.now().difference(_lastSuccess!) <
+            const Duration(minutes: 10)) {
       return;
     }
     loading = true;
     error = null;
     notifyListeners();
+
     try {
-      final now = await _now();
-      var days = const <WDay>[];
+      final now = await _fetchNow();
+      var days = const <WeatherDay>[];
       try {
-        days = await _days();
-      } catch (_) {}
-      _Open? open;
+        days = await _fetchDays();
+      } catch (_) {
+        days = const <WeatherDay>[];
+      }
+      _Extras? extras;
       try {
-        open = await _open();
-      } catch (_) {}
-      data = WSnap(
+        extras = await _fetchExtras();
+      } catch (_) {
+        extras = null;
+      }
+      snapshot = WeatherSnapshot(
         now: now,
         days: days,
-        hours: open?.hours ?? const [],
-        uv: open?.uv,
-        feels: open?.feels,
+        hours: extras?.hours ?? const <WeatherHour>[],
+        uv: extras?.uv,
+        feels: extras?.feels,
       );
-      _last = DateTime.now();
       error = null;
-    } on _WErr catch (e) {
-      error = e.code;
+      _lastSuccess = DateTime.now();
+    } on WeatherException catch (e) {
+      error = e.kind;
     } catch (_) {
-      error = 'network';
+      error = WeatherError.network;
     }
+
     loading = false;
     notifyListeners();
   }
 
-  Future<WNow> _now() async {
-    final m = await _get(
+  Future<WeatherNow> _fetchNow() async {
+    final map = await _getJson(
       Uri.https('restapi.amap.com', '/v3/weather/weatherInfo', {
-        'key': kKey,
-        'city': kCity,
+        'key': kAmapKey,
+        'city': kCityCode,
         'extensions': 'base',
       }),
     );
-    final lives = m['lives'];
-    if (lives is! List || lives.isEmpty) throw const _WErr('api');
-    final x = Map<String, dynamic>.from(lives.first as Map);
-    return WNow(
-      city: _s(x['city']),
-      desc: _s(x['weather']),
-      temp: _i(x['temperature']),
-      humidity: _i(x['humidity']),
-      windDir: _s(x['winddirection']),
-      windPower: _s(x['windpower']),
-      time: _s(x['reporttime']),
+    if (_str(map['status']) != '1') throw const WeatherException(WeatherError.api);
+    final lives = map['lives'];
+    if (lives is! List || lives.isEmpty) {
+      throw const WeatherException(WeatherError.api);
+    }
+    final live = Map<String, dynamic>.from(lives.first as Map);
+    return WeatherNow(
+      city: _str(live['city']),
+      desc: _str(live['weather']),
+      temp: _int(live['temperature']),
+      humidity: _int(live['humidity']),
+      windDir: _str(live['winddirection']),
+      windPower: _str(live['windpower']),
+      reportTime: _str(live['reporttime']),
     );
   }
 
-  Future<List<WDay>> _days() async {
-    final m = await _get(
+  Future<List<WeatherDay>> _fetchDays() async {
+    final map = await _getJson(
       Uri.https('restapi.amap.com', '/v3/weather/weatherInfo', {
-        'key': kKey,
-        'city': kCity,
+        'key': kAmapKey,
+        'city': kCityCode,
         'extensions': 'all',
       }),
     );
-    final fc = m['forecasts'];
-    if (fc is! List || fc.isEmpty) return const [];
-    final casts = (fc.first as Map)['casts'];
-    if (casts is! List) return const [];
-    return casts.whereType<Map>().map((raw) {
-      final x = Map<String, dynamic>.from(raw);
-      return WDay(
-        date: DateTime.tryParse(_s(x['date'])) ?? DateTime.now(),
-        dayDesc: _s(x['dayweather']),
-        high: _i(x['daytemp']),
-        low: _i(x['nighttemp']),
+    final forecasts = map['forecasts'];
+    if (forecasts is! List || forecasts.isEmpty) return const <WeatherDay>[];
+    final casts = (forecasts.first as Map)['casts'];
+    if (casts is! List) return const <WeatherDay>[];
+    final out = <WeatherDay>[];
+    for (final raw in casts.whereType<Map>()) {
+      final m = Map<String, dynamic>.from(raw);
+      out.add(
+        WeatherDay(
+          date: DateTime.tryParse(_str(m['date'])) ?? DateTime.now(),
+          dayDesc: _str(m['dayweather']),
+          high: _int(m['daytemp']),
+          low: _int(m['nighttemp']),
+        ),
       );
-    }).toList();
+    }
+    return out;
   }
 
-  Future<_Open?> _open() async {
+  Future<_Extras?> _fetchExtras() async {
     final uri = Uri.https('api.open-meteo.com', '/v1/forecast', {
       'latitude': '$kLat',
       'longitude': '$kLon',
@@ -521,58 +575,62 @@ class WeatherController extends ChangeNotifier {
       'timezone': 'Asia/Shanghai',
       'forecast_days': '2',
     });
-    final r = await _client.get(uri).timeout(const Duration(seconds: 10));
-    if (r.statusCode != 200) return null;
-    final m = jsonDecode(utf8.decode(r.bodyBytes));
-    if (m is! Map<String, dynamic>) return null;
+    final response = await _client.get(uri).timeout(const Duration(seconds: 10));
+    if (response.statusCode != 200) return null;
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is! Map<String, dynamic>) return null;
 
-    final hours = <WHour>[];
-    final hourly = m['hourly'];
+    final hours = <WeatherHour>[];
+    final hourly = decoded['hourly'];
     if (hourly is Map<String, dynamic>) {
       final times = hourly['time'] as List? ?? const [];
       final temps = hourly['temperature_2m'] as List? ?? const [];
       final rains = hourly['precipitation_probability'] as List? ?? const [];
-      final n = DateTime.now();
-      final floor = DateTime(n.year, n.month, n.day, n.hour);
+      final now = DateTime.now();
+      final floor = DateTime(now.year, now.month, now.day, now.hour);
       for (var i = 0; i < times.length; i++) {
         final t = DateTime.tryParse('${times[i]}');
         if (t == null || t.isBefore(floor)) continue;
         hours.add(
-          WHour(
+          WeatherHour(
             time: t,
-            temp: _d(i < temps.length ? temps[i] : null),
-            rain: _i(i < rains.length ? rains[i] : null),
+            temp: _dbl(i < temps.length ? temps[i] : null),
+            rain: _int(i < rains.length ? rains[i] : null),
           ),
         );
         if (hours.length >= 12) break;
       }
     }
 
-    final cur = m['current'];
-    final c = cur is Map<String, dynamic> ? cur : const <String, dynamic>{};
-    return _Open(
+    final current = decoded['current'];
+    if (current is! Map<String, dynamic>) {
+      return _Extras(hours: hours);
+    }
+    return _Extras(
       hours: hours,
-      uv: cur == null ? null : _d(c['uv_index']),
-      feels: cur == null ? null : _d(c['apparent_temperature']),
+      uv: _dbl(current['uv_index']),
+      feels: _dbl(current['apparent_temperature']),
     );
   }
 
-  Future<Map<String, dynamic>> _get(Uri uri) async {
-    http.Response r;
+  Future<Map<String, dynamic>> _getJson(Uri uri) async {
+    http.Response response;
     try {
-      r = await _client.get(uri).timeout(const Duration(seconds: 10));
+      response = await _client.get(uri).timeout(const Duration(seconds: 10));
     } catch (_) {
-      throw const _WErr('network');
+      throw const WeatherException(WeatherError.network);
     }
-    if (r.statusCode != 200) throw const _WErr('network');
+    if (response.statusCode != 200) {
+      throw const WeatherException(WeatherError.network);
+    }
     try {
-      final d = jsonDecode(utf8.decode(r.bodyBytes));
-      if (d is Map<String, dynamic>) return d;
-      throw const _WErr('api');
-    } on _WErr {
+      final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+      if (decoded is Map<String, dynamic>) return decoded;
+      throw const WeatherException(WeatherError.api);
+    } on WeatherException {
       rethrow;
     } catch (_) {
-      throw const _WErr('api');
+      throw const WeatherException(WeatherError.api);
     }
   }
 
@@ -583,84 +641,100 @@ class WeatherController extends ChangeNotifier {
   }
 }
 
-class _Open {
-  const _Open({required this.hours, this.uv, this.feels});
-  final List<WHour> hours;
-  final double? uv;
-  final double? feels;
+class WeatherException implements Exception {
+  const WeatherException(this.kind);
+
+  final WeatherError kind;
+
+  @override
+  String toString() => 'WeatherException($kind)';
 }
 
-enum HScope { cn, de, us }
+/* =============================== holidays ============================== */
+
+enum HolidayScope { cn, de, us }
 
 class Holiday {
   const Holiday(this.scope, this.zh, this.en);
-  final HScope scope;
+
+  final HolidayScope scope;
   final String zh;
   final String en;
+
   String name(bool zhMode) => zhMode ? zh : en;
 }
 
-class _Fixed {
-  const _Fixed(this.m, this.d, this.scope, this.zh, this.en);
-  final int m;
-  final int d;
-  final HScope scope;
+class _FixedHoliday {
+  const _FixedHoliday(this.month, this.day, this.scope, this.zh, this.en);
+
+  final int month;
+  final int day;
+  final HolidayScope scope;
   final String zh;
   final String en;
 }
 
-class _Offset {
-  const _Offset(this.o, this.scope, this.zh, this.en);
-  final int o;
-  final HScope scope;
+class _EasterHoliday {
+  const _EasterHoliday(this.offset, this.scope, this.zh, this.en);
+
+  final int offset;
+  final HolidayScope scope;
   final String zh;
   final String en;
 }
 
-class _Nth {
-  const _Nth(this.m, this.w, this.n, this.scope, this.zh, this.en);
-  final int m;
-  final int w;
-  final int n;
-  final HScope scope;
+class _NthHoliday {
+  const _NthHoliday(
+      this.month,
+      this.weekday,
+      this.nth,
+      this.scope,
+      this.zh,
+      this.en,
+      );
+
+  final int month;
+  final int weekday;
+  final int nth;
+  final HolidayScope scope;
   final String zh;
   final String en;
 }
 
-const List<_Fixed> _fixedHolidays = [
-  _Fixed(1, 1, HScope.cn, '元旦', "New Year's Day"),
-  _Fixed(4, 4, HScope.cn, '清明节', 'Qingming Festival'),
-  _Fixed(5, 1, HScope.cn, '劳动节', 'Labour Day'),
-  _Fixed(10, 1, HScope.cn, '国庆节', 'National Day'),
-  _Fixed(1, 1, HScope.de, '元旦', 'Neujahr'),
-  _Fixed(1, 6, HScope.de, '主显节', 'Heilige Drei Könige'),
-  _Fixed(5, 1, HScope.de, '劳动节', 'Tag der Arbeit'),
-  _Fixed(10, 3, HScope.de, '德国统一日', 'Tag der Deutschen Einheit'),
-  _Fixed(10, 31, HScope.de, '宗教改革日', 'Reformationstag'),
-  _Fixed(11, 1, HScope.de, '万圣节', 'Allerheiligen'),
-  _Fixed(12, 25, HScope.de, '圣诞第一节', '1. Weihnachtstag'),
-  _Fixed(12, 26, HScope.de, '圣诞第二节', '2. Weihnachtstag'),
-  _Fixed(1, 1, HScope.us, '新年', "New Year's Day"),
-  _Fixed(2, 14, HScope.us, '情人节', "Valentine's Day"),
-  _Fixed(7, 4, HScope.us, '独立日', 'Independence Day'),
-  _Fixed(10, 31, HScope.us, '万圣夜', 'Halloween'),
-  _Fixed(12, 25, HScope.us, '圣诞节', 'Christmas Day'),
+const List<_FixedHoliday> _fixedHolidays = [
+  _FixedHoliday(1, 1, HolidayScope.cn, '元旦', "New Year's Day"),
+  _FixedHoliday(4, 4, HolidayScope.cn, '清明节', 'Qingming Festival'),
+  _FixedHoliday(5, 1, HolidayScope.cn, '劳动节', 'Labour Day'),
+  _FixedHoliday(10, 1, HolidayScope.cn, '国庆节', 'National Day'),
+  _FixedHoliday(1, 1, HolidayScope.de, '元旦', 'Neujahr'),
+  _FixedHoliday(1, 6, HolidayScope.de, '主显节', 'Heilige Drei Könige'),
+  _FixedHoliday(5, 1, HolidayScope.de, '劳动节', 'Tag der Arbeit'),
+  _FixedHoliday(10, 3, HolidayScope.de, '德国统一日', 'Tag der Deutschen Einheit'),
+  _FixedHoliday(10, 31, HolidayScope.de, '宗教改革日', 'Reformationstag'),
+  _FixedHoliday(11, 1, HolidayScope.de, '万圣节', 'Allerheiligen'),
+  _FixedHoliday(12, 25, HolidayScope.de, '圣诞第一节', '1. Weihnachtstag'),
+  _FixedHoliday(12, 26, HolidayScope.de, '圣诞第二节', '2. Weihnachtstag'),
+  _FixedHoliday(1, 1, HolidayScope.us, '新年', "New Year's Day"),
+  _FixedHoliday(2, 14, HolidayScope.us, '情人节', "Valentine's Day"),
+  _FixedHoliday(7, 4, HolidayScope.us, '独立日', 'Independence Day'),
+  _FixedHoliday(10, 31, HolidayScope.us, '万圣夜', 'Halloween'),
+  _FixedHoliday(12, 25, HolidayScope.us, '圣诞节', 'Christmas Day'),
 ];
 
-const List<_Offset> _easterHolidays = [
-  _Offset(-2, HScope.de, '耶稣受难日', 'Karfreitag'),
-  _Offset(1, HScope.de, '复活节星期一', 'Ostermontag'),
-  _Offset(39, HScope.de, '耶稣升天节', 'Christi Himmelfahrt'),
-  _Offset(50, HScope.de, '圣灵降临节星期一', 'Pfingstmontag'),
+const List<_EasterHoliday> _easterHolidays = [
+  _EasterHoliday(-2, HolidayScope.de, '耶稣受难日', 'Karfreitag'),
+  _EasterHoliday(1, HolidayScope.de, '复活节星期一', 'Ostermontag'),
+  _EasterHoliday(39, HolidayScope.de, '耶稣升天节', 'Christi Himmelfahrt'),
+  _EasterHoliday(50, HolidayScope.de, '圣灵降临节星期一', 'Pfingstmontag'),
 ];
 
-const List<_Nth> _nthHolidays = [
-  _Nth(5, 7, 2, HScope.us, '母亲节', "Mother's Day"),
-  _Nth(6, 7, 3, HScope.us, '父亲节', "Father's Day"),
-  _Nth(11, 4, 4, HScope.us, '感恩节', 'Thanksgiving'),
+const List<_NthHoliday> _nthHolidays = [
+  _NthHoliday(5, 7, 2, HolidayScope.us, '母亲节', "Mother's Day"),
+  _NthHoliday(6, 7, 3, HolidayScope.us, '父亲节', "Father's Day"),
+  _NthHoliday(11, 4, 4, HolidayScope.us, '感恩节', 'Thanksgiving'),
 ];
 
-const Map<int, Map<String, List<int>>> _lunar = {
+const Map<int, Map<String, List<int>>> _lunarDates = {
   2024: {
     'spring': [2, 10],
     'lantern': [2, 24],
@@ -699,54 +773,67 @@ const Map<String, List<String>> _lunarNames = {
   'double': ['重阳节', 'Double Ninth Festival'],
 };
 
-final _Holidays holidays = _Holidays();
+class HolidayEngine {
+  const HolidayEngine();
 
-class _Holidays {
-  List<Holiday> forDate(DateTime d) {
+  List<Holiday> forDate(DateTime date) {
     final out = <Holiday>[];
+
     for (final h in _fixedHolidays) {
-      if (h.m == d.month && h.d == d.day) {
+      if (h.month == date.month && h.day == date.day) {
         out.add(Holiday(h.scope, h.zh, h.en));
       }
     }
-    final e = easter(d.year);
-    for (final o in _easterHolidays) {
-      final x = e.add(Duration(days: o.o));
-      if (x.month == d.month && x.day == d.day) {
-        out.add(Holiday(o.scope, o.zh, o.en));
+
+    final easterDate = easter(date.year);
+    for (final h in _easterHolidays) {
+      final target = easterDate.add(Duration(days: h.offset));
+      if (target.month == date.month && target.day == date.day) {
+        out.add(Holiday(h.scope, h.zh, h.en));
       }
     }
-    for (final n in _nthHolidays) {
-      if (n.m != d.month) continue;
-      if (_nthWeekday(d.year, n.m, n.w, n.n) == d.day) {
-        out.add(Holiday(n.scope, n.zh, n.en));
-      }
+
+    for (final h in _nthHolidays) {
+      if (h.month != date.month) continue;
+      final day = _nthWeekday(date.year, h.month, h.weekday, h.nth);
+      if (day == date.day) out.add(Holiday(h.scope, h.zh, h.en));
     }
-    _lunar[d.year]?.forEach((k, md) {
-      if (md[0] == d.month && md[1] == d.day) {
-        final nm = _lunarNames[k];
-        if (nm != null) out.add(Holiday(HScope.cn, nm[0], nm[1]));
-      }
-    });
+
+    final lunar = _lunarDates[date.year];
+    if (lunar != null) {
+      lunar.forEach((key, md) {
+        if (md[0] == date.month && md[1] == date.day) {
+          final names = _lunarNames[key];
+          if (names != null) {
+            out.add(Holiday(HolidayScope.cn, names[0], names[1]));
+          }
+        }
+      });
+    }
+
     return out;
   }
 
-  Map<int, List<Holiday>> forMonth(int y, int m, Set<HScope> scopes) {
-    final out = <int, List<Holiday>>{};
-    final total = DateTime(y, m + 1, 0).day;
-    for (var d = 1; d <= total; d++) {
-      final list = forDate(DateTime(y, m, d))
+  Map<int, List<Holiday>> forMonth(
+      int year,
+      int month,
+      Set<HolidayScope> scopes,
+      ) {
+    final result = <int, List<Holiday>>{};
+    final total = DateTime(year, month + 1, 0).day;
+    for (var day = 1; day <= total; day++) {
+      final list = forDate(DateTime(year, month, day))
           .where((h) => scopes.contains(h.scope))
           .toList();
-      if (list.isNotEmpty) out[d] = list;
+      if (list.isNotEmpty) result[day] = list;
     }
-    return out;
+    return result;
   }
 
-  DateTime easter(int y) {
-    final a = y % 19;
-    final b = y ~/ 100;
-    final c = y % 100;
+  DateTime easter(int year) {
+    final a = year % 19;
+    final b = year ~/ 100;
+    final c = year % 100;
     final d = b ~/ 4;
     final e = b % 4;
     final f = (b + 8) ~/ 25;
@@ -756,90 +843,144 @@ class _Holidays {
     final k = c % 4;
     final l = (32 + 2 * e + 2 * i - h - k) % 7;
     final m = (a + 11 * h + 22 * l) ~/ 451;
-    return DateTime(
-      y,
-      (h + l - 7 * m + 114) ~/ 31,
-      (h + l - 7 * m + 114) % 31 + 1,
-    );
+    final month = (h + l - 7 * m + 114) ~/ 31;
+    final day = (h + l - 7 * m + 114) % 31 + 1;
+    return DateTime(year, month, day);
   }
 
-  int _nthWeekday(int y, int m, int weekday, int n) {
-    final first = DateTime(y, m, 1);
-    return 1 + (weekday - first.weekday) % 7 + (n - 1) * 7;
+  int _nthWeekday(int year, int month, int weekday, int nth) {
+    final first = DateTime(year, month, 1);
+    final delta = (weekday - first.weekday) % 7;
+    return 1 + delta + (nth - 1) * 7;
   }
 
-  String label(HScope s, bool zh) => switch (s) {
-    HScope.cn => zh ? '中国' : 'CN',
-    HScope.de => zh ? '德国' : 'DE',
-    HScope.us => zh ? '美国' : 'US',
-  };
+  String scopeLabel(HolidayScope scope, bool zh) {
+    switch (scope) {
+      case HolidayScope.cn:
+        return zh ? '中国' : 'CN';
+      case HolidayScope.de:
+        return zh ? '德国' : 'DE';
+      case HolidayScope.us:
+        return zh ? '美国' : 'US';
+    }
+  }
 }
 
-class Anon {
-  const Anon(this.alias, this.metaZh, this.metaEn, this.textZh, this.textEn);
+const HolidayEngine holidayEngine = HolidayEngine();
+
+/* ============================== tree hole ============================== */
+
+class AnonPost {
+  const AnonPost(
+      this.alias,
+      this.metaZh,
+      this.metaEn,
+      this.textZh,
+      this.textEn,
+      );
+
   final String alias;
   final String metaZh;
   final String metaEn;
   final String textZh;
   final String textEn;
+
   String meta(bool zh) => zh ? metaZh : metaEn;
+
   String text(bool zh) => zh ? textZh : textEn;
 }
 
-const List<Anon> _anonPool = [
-  Anon('匿名小猫', '22 岁 · 广州', '22 · Guangzhou', '哪怕今天很糟糕，我也挺过来了',
-      'Today was awful. But I made it.'),
-  Anon('走神的星星', '25 岁 · 成都', '25 · Chengdu', '凌晨两点睡不着，但没有告诉任何人',
-      'Awake at 2am. Told nobody.'),
-  Anon('抱膝的人', '19 岁 · 哈尔滨', '19 · Harbin', '今天对喜欢的人说了早安，他没有回',
-      'Said good morning to my crush. No reply.'),
-  Anon('路过的风', '28 岁 · 杭州', '28 · Hangzhou', '加班到十点，楼下的关东煮是唯一的温暖',
-      'Worked till ten. Oden was the only warmth.'),
-  Anon('橘子汽水', '21 岁 · 长沙', '21 · Changsha', '一个人搬家，一个人庆祝，也一个人长大',
-      'Moved alone, grew up alone.'),
-  Anon('安静的树', '30 岁 · 西安', '30 · Xi’an', '我在人群中，但我不在人群里',
-      'Among people, but not in them.'),
+const List<AnonPost> anonPool = [
+  AnonPost(
+    '匿名小猫',
+    '22 岁 · 广州',
+    '22 · Guangzhou',
+    '哪怕今天很糟糕，我也挺过来了',
+    'Today was awful. But I made it through.',
+  ),
+  AnonPost(
+    '走神的星星',
+    '25 岁 · 成都',
+    '25 · Chengdu',
+    '凌晨两点睡不着，但没有告诉任何人',
+    'Awake at 2am. I told nobody.',
+  ),
+  AnonPost(
+    '抱膝的人',
+    '19 岁 · 哈尔滨',
+    '19 · Harbin',
+    '今天对喜欢的人说了早安，他没有回',
+    'I said good morning to my crush. No reply.',
+  ),
+  AnonPost(
+    '路过的风',
+    '28 岁 · 杭州',
+    '28 · Hangzhou',
+    '加班到十点，楼下的关东煮是唯一的温暖',
+    'Worked till ten. Oden downstairs was the only warmth.',
+  ),
+  AnonPost(
+    '橘子汽水',
+    '21 岁 · 长沙',
+    '21 · Changsha',
+    '一个人搬家，一个人庆祝，也一个人长大',
+    'Moved alone, celebrated alone, grew up alone.',
+  ),
+  AnonPost(
+    '安静的树',
+    '30 岁 · 西安',
+    '30 · Xi’an',
+    '我在人群中，但我不在人群里',
+    'I am among people, but not in them.',
+  ),
 ];
+
+/* ================================== app ================================ */
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppStore.load();
-  runApp(const App());
+  runApp(const NotAloneApp());
 }
 
-class App extends StatelessWidget {
-  const App({super.key});
+class NotAloneApp extends StatelessWidget {
+  const NotAloneApp({super.key});
 
-  ThemeData _theme(Brightness b) => ThemeData(
-    useMaterial3: true,
-    brightness: b,
-    colorSchemeSeed: const Color(0xFF8EC5FF),
-    scaffoldBackgroundColor: b == Brightness.dark
-        ? const Color(0xFF07080E)
-        : const Color(0xFFF4F5F9),
-    splashFactory: InkSparkle.splashFactory,
-  );
+  ThemeData _theme(Brightness brightness) {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: brightness,
+      colorSchemeSeed: const Color(0xFF8EC5FF),
+      scaffoldBackgroundColor: brightness == Brightness.dark
+          ? const Color(0xFF07080E)
+          : const Color(0xFFF4F5F9),
+      splashFactory: InkSparkle.splashFactory,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: AppStore.I,
-      builder: (context, _) => MaterialApp(
-        title: 'Not alone',
-        debugShowCheckedModeBanner: false,
-        locale: AppStore.I.locale,
-        supportedLocales: L10n.supported,
-        localizationsDelegates: const [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-          L10n.delegate,
-        ],
-        themeMode: AppStore.I.themeMode,
-        theme: _theme(Brightness.light),
-        darkTheme: _theme(Brightness.dark),
-        home: const RootPage(),
-      ),
+      builder: (context, _) {
+        final store = AppStore.I;
+        return MaterialApp(
+          title: 'Not alone',
+          debugShowCheckedModeBanner: false,
+          locale: store.locale,
+          supportedLocales: L10n.supportedLocales,
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+            L10n.delegate,
+          ],
+          themeMode: store.themeMode,
+          theme: _theme(Brightness.light),
+          darkTheme: _theme(Brightness.dark),
+          home: const RootPage(),
+        );
+      },
     );
   }
 }
@@ -860,7 +1001,7 @@ class _RootPageState extends State<RootPage> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _weather.refresh();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _gates());
+    WidgetsBinding.instance.addPostFrameCallback((_) => _runStartupGates());
   }
 
   @override
@@ -871,60 +1012,63 @@ class _RootPageState extends State<RootPage> with WidgetsBindingObserver {
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState s) {
-    if (s == AppLifecycleState.resumed) _weather.refresh();
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _weather.refresh();
   }
 
-  Future<void> _gates() async {
+  Future<void> _runStartupGates() async {
     final store = AppStore.I;
+
     if (!store.careAccepted) {
-      await showCare(context);
+      await showCareDialog(context);
       await store.acceptCare();
     }
     if (!mounted) return;
+
     if (store.birthday == null) {
-      final v = await showBirthday(context);
-      if (v != null) await store.setBirthday(v);
+      final value = await showBirthdayDialog(context);
+      if (value != null) await store.setBirthday(value);
     }
     if (!mounted) return;
-    final b = store.birthday;
-    if (b != null &&
-        isBirthdayToday(b) &&
+
+    final birthday = store.birthday;
+    if (birthday != null &&
+        isBirthdayToday(birthday) &&
         store.cakeShownOn != ymd(DateTime.now())) {
-      await showCake(context, b);
+      await showCakeDialog(context, birthday);
       await store.markCakeShown();
     }
   }
 
-  Future<void> _openAlarm() async {
-    final r = await showAlarmSheet(
+  Future<void> _openAlarmSheet() async {
+    final result = await showAlarmSheet(
       context,
       AppStore.I.alarmHour,
       AppStore.I.alarmMinute,
     );
-    if (r == null) return;
-    await AppStore.I.setAlarm(r.$1, r.$2);
+    if (result == null) return;
+    await AppStore.I.setAlarm(result.$1, result.$2);
     if (!mounted) return;
+    final label = '${two(result.$1)}:${two(result.$2)}';
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
           behavior: SnackBarBehavior.floating,
-          content: Text(
-            context.t('alarmSaved', {'t': '${two(r.$1)}:${two(r.$2)}'}),
-          ),
+          content: Text(context.t('alarmSaved', {'t': label})),
         ),
       );
   }
 
   @override
   Widget build(BuildContext context) {
-    final l = context.l;
+    final l = context.l10n;
+    final cs = context.cs;
+
     return ListenableBuilder(
       listenable: AppStore.I,
       builder: (context, _) {
-        final s = AppStore.I;
-        final cs = context.cs;
+        final store = AppStore.I;
         return Scaffold(
           extendBody: true,
           body: IndexedStack(
@@ -932,16 +1076,16 @@ class _RootPageState extends State<RootPage> with WidgetsBindingObserver {
             children: [
               HomePage(
                 weather: _weather,
-                hour: s.alarmHour,
-                minute: s.alarmMinute,
-                wallpaper: s.wallpaper,
-                ringtone: s.ringtone,
-                onAlarm: _openAlarm,
+                alarmHour: store.alarmHour,
+                alarmMinute: store.alarmMinute,
+                wallpaper: store.wallpaper,
+                ringtone: store.ringtone,
+                onOpenAlarm: _openAlarmSheet,
               ),
               WeatherPage(weather: _weather),
               const CalendarPage(),
               const TreeHolePage(),
-              SettingsPage(onAlarm: _openAlarm),
+              SettingsPage(onOpenAlarm: _openAlarmSheet),
             ],
           ),
           bottomNavigationBar: BottomNavigationBar(
@@ -951,7 +1095,7 @@ class _RootPageState extends State<RootPage> with WidgetsBindingObserver {
             elevation: 0,
             type: BottomNavigationBarType.fixed,
             selectedItemColor: cs.onSurface,
-            unselectedItemColor: cs.onSurface.withValues(alpha: 0.45),
+            unselectedItemColor: cs.onSurface.withValues(alpha: 0.5),
             selectedFontSize: 10,
             unselectedFontSize: 10,
             items: [
@@ -988,6 +1132,8 @@ class _RootPageState extends State<RootPage> with WidgetsBindingObserver {
   }
 }
 
+/* ============================= shared widgets ========================== */
+
 class GlassCard extends StatelessWidget {
   const GlassCard({
     super.key,
@@ -1004,13 +1150,16 @@ class GlassCard extends StatelessWidget {
   final String value;
   final String? subtitle;
   final VoidCallback? onTap;
+
+  /// true：铺在壁纸上的白色玻璃；false：跟随当前主题
   final bool onImage;
 
   @override
   Widget build(BuildContext context) {
     final cs = context.cs;
     final base = onImage ? Colors.white : cs.onSurface;
-    final card = ClipRRect(
+
+    final Widget card = ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(
         filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
@@ -1019,9 +1168,9 @@ class GlassCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: onImage
                 ? Colors.white.withValues(alpha: 0.16)
-                : cs.surfaceContainerHighest.withValues(alpha: 0.5),
+                : cs.surfaceContainerHighest.withValues(alpha: 0.55),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: base.withValues(alpha: 0.24)),
+            border: Border.all(color: base.withValues(alpha: 0.22)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: onImage ? 0.18 : 0.05),
@@ -1083,6 +1232,7 @@ class GlassCard extends StatelessWidget {
         ),
       ),
     );
+
     if (onTap == null) return card;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -1098,34 +1248,36 @@ Future<T?> showAppSheet<T>(BuildContext context, WidgetBuilder builder) {
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (ctx) => Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.sizeOf(ctx).height * 0.86,
-      ),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerHigh,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: cs.onSurface.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Flexible(child: builder(ctx)),
-          ],
+    builder: (ctx) {
+      return Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(ctx).height * 0.86,
         ),
-      ),
-    ),
+        decoration: BoxDecoration(
+          color: cs.surfaceContainerHigh,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: cs.onSurface.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Flexible(child: builder(ctx)),
+            ],
+          ),
+        ),
+      );
+    },
   );
 }
 
@@ -1135,36 +1287,41 @@ class SheetTitle extends StatelessWidget {
   final String text;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 10),
-    child: Text(
-      text,
-      style: TextStyle(
-        color: context.cs.onSurface,
-        fontSize: 15,
-        fontWeight: FontWeight.w600,
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: context.cs.onSurface,
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
+
+/* ============================== mini calendar ========================== */
 
 class MiniCalendar extends StatelessWidget {
   const MiniCalendar({
     super.key,
-    required this.focused,
-    required this.selected,
+    required this.focusedDay,
+    required this.selectedDay,
     required this.onFocused,
     required this.onSelected,
   });
 
-  final DateTime focused;
-  final DateTime selected;
+  final DateTime focusedDay;
+  final DateTime selectedDay;
   final ValueChanged<DateTime> onFocused;
-  final void Function(DateTime, DateTime) onSelected;
+  final void Function(DateTime selected, DateTime focused) onSelected;
 
   @override
   Widget build(BuildContext context) {
-    final l = context.l;
+    final l = context.l10n;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(6, 2, 6, 6),
       decoration: BoxDecoration(
@@ -1180,15 +1337,18 @@ class MiniCalendar extends StatelessWidget {
               IconButton(
                 visualDensity: VisualDensity.compact,
                 onPressed: () => onFocused(
-                  DateTime(focused.year, focused.month - 1, 1),
+                  DateTime(focusedDay.year, focusedDay.month - 1, 1),
                 ),
-                icon: const Icon(Icons.chevron_left,
-                    size: 18, color: Colors.white),
+                icon: const Icon(
+                  Icons.chevron_left,
+                  size: 18,
+                  color: Colors.white,
+                ),
               ),
               Expanded(
                 child: Center(
                   child: Text(
-                    monthLabel(focused, l.isZh),
+                    monthLabel(focusedDay, l.isZh),
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 13,
@@ -1200,69 +1360,83 @@ class MiniCalendar extends StatelessWidget {
               IconButton(
                 visualDensity: VisualDensity.compact,
                 onPressed: () => onFocused(
-                  DateTime(focused.year, focused.month + 1, 1),
+                  DateTime(focusedDay.year, focusedDay.month + 1, 1),
                 ),
-                icon: const Icon(Icons.chevron_right,
-                    size: 18, color: Colors.white),
+                icon: const Icon(
+                  Icons.chevron_right,
+                  size: 18,
+                  color: Colors.white,
+                ),
               ),
             ],
           ),
           TableCalendar<Holiday>(
             firstDay: DateTime.utc(1970, 1, 1),
             lastDay: DateTime.utc(2100, 12, 31),
-            focusedDay: focused,
+            focusedDay: focusedDay,
             headerVisible: false,
             rowHeight: 30,
             daysOfWeekHeight: 18,
             calendarFormat: CalendarFormat.month,
             availableCalendarFormats: const {CalendarFormat.month: ''},
-            eventLoader: holidays.forDate,
-            selectedDayPredicate: (d) => isSameDay(d, selected),
+            eventLoader: holidayEngine.forDate,
+            selectedDayPredicate: (day) => isSameDay(day, selectedDay),
             onDaySelected: onSelected,
             onPageChanged: onFocused,
             calendarStyle: CalendarStyle(
               outsideDaysVisible: false,
               cellMargin: const EdgeInsets.all(2),
-              defaultTextStyle:
-              const TextStyle(color: Color(0xB3FFFFFF), fontSize: 11),
-              weekendTextStyle:
-              const TextStyle(color: Color(0x80FFFFFF), fontSize: 11),
+              defaultTextStyle: const TextStyle(
+                color: Color(0xB3FFFFFF),
+                fontSize: 11,
+              ),
+              weekendTextStyle: const TextStyle(
+                color: Color(0x80FFFFFF),
+                fontSize: 11,
+              ),
               todayDecoration: const BoxDecoration(
                 color: Color(0x3DFFFFFF),
                 shape: BoxShape.circle,
               ),
-              todayTextStyle:
-              const TextStyle(color: Colors.white, fontSize: 11),
+              todayTextStyle: const TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+              ),
               selectedDecoration: const BoxDecoration(
                 color: Colors.white,
                 shape: BoxShape.circle,
               ),
-              selectedTextStyle:
-              const TextStyle(color: Colors.black, fontSize: 11),
+              selectedTextStyle: const TextStyle(
+                color: Colors.black,
+                fontSize: 11,
+              ),
             ),
             calendarBuilders: CalendarBuilders<Holiday>(
-              dowBuilder: (c, d) => Center(
-                child: Text(
-                  wdShort(d.weekday, l.isZh),
-                  style: const TextStyle(
-                    color: Color(0x66FFFFFF),
-                    fontSize: 9,
+              dowBuilder: (c, day) {
+                return Center(
+                  child: Text(
+                    wdShort(day.weekday, l.isZh),
+                    style: const TextStyle(
+                      color: Color(0x66FFFFFF),
+                      fontSize: 9,
+                    ),
                   ),
-                ),
-              ),
-              markerBuilder: (c, d, e) => e.isEmpty
-                  ? null
-                  : Align(
-                alignment: Alignment.bottomCenter,
-                child: Container(
-                  width: 4,
-                  height: 4,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFFFD54F),
-                    shape: BoxShape.circle,
+                );
+              },
+              markerBuilder: (c, day, events) {
+                if (events.isEmpty) return null;
+                return Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    width: 4,
+                    height: 4,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFFFD54F),
+                      shape: BoxShape.circle,
+                    ),
                   ),
-                ),
-              ),
+                );
+              },
             ),
           ),
         ],
@@ -1271,28 +1445,38 @@ class MiniCalendar extends StatelessWidget {
   }
 }
 
-class MetricGrid extends StatelessWidget {
-  const MetricGrid({super.key, required this.snap});
-  final WSnap snap;
+/* ============================ weather widgets ========================== */
+
+class WeatherMetrics extends StatelessWidget {
+  const WeatherMetrics({super.key, required this.snapshot});
+
+  final WeatherSnapshot snapshot;
 
   @override
   Widget build(BuildContext context) {
-    final l = context.l;
+    final l = context.l10n;
     final cs = context.cs;
-    final items = <(IconData, String, String)>[
-      (Icons.water_drop_outlined, l.t('humidity'), '${snap.now.humidity}%'),
-      (Icons.air, l.t('wind'), '${snap.now.windDir} ${snap.now.windPower}'),
-      (
-      Icons.wb_sunny_outlined,
-      l.t('uv'),
-      snap.uv == null ? '—' : snap.uv!.toStringAsFixed(1),
-      ),
-      (
-      Icons.thermostat_outlined,
-      l.t('feels'),
-      snap.feels == null ? '—' : '${snap.feels!.round()}°C',
-      ),
+
+    final items = <List<String>>[
+      [l.t('humidity'), '${snapshot.now.humidity}%'],
+      [l.t('wind'), '${snapshot.now.windDir} ${snapshot.now.windPower}'],
+      [
+        l.t('uv'),
+        snapshot.uv == null ? '—' : snapshot.uv!.toStringAsFixed(1),
+      ],
+      [
+        l.t('feels'),
+        snapshot.feels == null ? '—' : '${snapshot.feels!.round()}°C',
+      ],
     ];
+
+    const icons = [
+      Icons.water_drop_outlined,
+      Icons.air,
+      Icons.wb_sunny_outlined,
+      Icons.thermostat_outlined,
+    ];
+
     return GridView.count(
       crossAxisCount: 2,
       shrinkWrap: true,
@@ -1301,7 +1485,7 @@ class MetricGrid extends StatelessWidget {
       crossAxisSpacing: 8,
       childAspectRatio: 2.5,
       children: [
-        for (final it in items)
+        for (var i = 0; i < items.length; i++)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
@@ -1311,7 +1495,7 @@ class MetricGrid extends StatelessWidget {
             child: Row(
               children: [
                 Icon(
-                  it.$1,
+                  icons[i],
                   size: 15,
                   color: cs.onSurface.withValues(alpha: 0.55),
                 ),
@@ -1322,14 +1506,14 @@ class MetricGrid extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        it.$2,
+                        items[i][0],
                         style: TextStyle(
                           color: cs.onSurface.withValues(alpha: 0.45),
                           fontSize: 10,
                         ),
                       ),
                       Text(
-                        it.$3,
+                        items[i][1],
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -1351,7 +1535,8 @@ class MetricGrid extends StatelessWidget {
 
 class HourStrip extends StatelessWidget {
   const HourStrip({super.key, required this.hours});
-  final List<WHour> hours;
+
+  final List<WeatherHour> hours;
 
   @override
   Widget build(BuildContext context) {
@@ -1362,8 +1547,8 @@ class HourStrip extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         itemCount: hours.length,
         separatorBuilder: (_, __) => const SizedBox(width: 8),
-        itemBuilder: (c, i) {
-          final h = hours[i];
+        itemBuilder: (context, index) {
+          final hour = hours[index];
           return Container(
             width: 60,
             padding: const EdgeInsets.symmetric(vertical: 9),
@@ -1375,19 +1560,21 @@ class HourStrip extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '${two(h.time.hour)}:00',
+                  '${two(hour.time.hour)}:00',
                   style: TextStyle(
                     color: cs.onSurface.withValues(alpha: 0.5),
                     fontSize: 10,
                   ),
                 ),
                 Icon(
-                  h.rain >= 50 ? Icons.umbrella_outlined : Icons.wb_sunny_outlined,
+                  hour.rain >= 50
+                      ? Icons.umbrella_outlined
+                      : Icons.wb_sunny_outlined,
                   size: 15,
                   color: cs.onSurface.withValues(alpha: 0.6),
                 ),
                 Text(
-                  '${h.temp.round()}°',
+                  '${hour.temp.round()}°',
                   style: TextStyle(
                     color: cs.onSurface,
                     fontSize: 13,
@@ -1395,7 +1582,7 @@ class HourStrip extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${h.rain}%',
+                  '${hour.rain}%',
                   style: TextStyle(
                     color: cs.onSurface.withValues(alpha: 0.4),
                     fontSize: 9,
@@ -1410,17 +1597,19 @@ class HourStrip extends StatelessWidget {
   }
 }
 
-class DayList extends StatelessWidget {
-  const DayList({super.key, required this.days});
-  final List<WDay> days;
+class DailyList extends StatelessWidget {
+  const DailyList({super.key, required this.days});
+
+  final List<WeatherDay> days;
 
   @override
   Widget build(BuildContext context) {
-    final l = context.l;
+    final l = context.l10n;
     final cs = context.cs;
+
     return Column(
       children: [
-        for (final d in days)
+        for (final day in days)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 7),
             child: Row(
@@ -1428,8 +1617,8 @@ class DayList extends StatelessWidget {
                 SizedBox(
                   width: 96,
                   child: Text(
-                    '${d.date.month}/${d.date.day} '
-                        '${wdFull(d.date.weekday, l.isZh)}',
+                    '${day.date.month}/${day.date.day} '
+                        '${wdFull(day.date.weekday, l.isZh)}',
                     style: TextStyle(
                       color: cs.onSurface.withValues(alpha: 0.55),
                       fontSize: 11,
@@ -1438,7 +1627,7 @@ class DayList extends StatelessWidget {
                 ),
                 Expanded(
                   child: Text(
-                    l.isZh ? d.dayDesc : descEn(d.dayDesc),
+                    l.isZh ? day.dayDesc : descEn(day.dayDesc),
                     style: TextStyle(
                       color: cs.onSurface.withValues(alpha: 0.85),
                       fontSize: 12,
@@ -1446,7 +1635,7 @@ class DayList extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${d.low}° / ${d.high}°',
+                  '${day.low}° / ${day.high}°',
                   style: TextStyle(
                     color: cs.onSurface,
                     fontSize: 12,
@@ -1461,40 +1650,77 @@ class DayList extends StatelessWidget {
   }
 }
 
-Future<void> showWeatherSheet(BuildContext context, WeatherController c) {
-  return showAppSheet<void>(context, (ctx) {
-    final l = ctx.l;
-    final cs = ctx.cs;
-    return ListenableBuilder(
-      listenable: c,
-      builder: (ctx, _) {
-        final s = c.data;
-        if (s == null) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 28),
-            child: Center(
-              child: c.loading
-                  ? const CircularProgressIndicator()
-                  : Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    l.t(c.error == 'api' ? 'wUnavailable' : 'wNetwork'),
-                    style: TextStyle(
-                      color: cs.onSurface.withValues(alpha: 0.7),
-                      fontSize: 12,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextButton(
-                    onPressed: () => c.refresh(force: true),
-                    child: Text(l.t('wRetry')),
-                  ),
-                ],
-              ),
+class WeatherErrorBox extends StatelessWidget {
+  const WeatherErrorBox({
+    super.key,
+    required this.error,
+    required this.onRetry,
+  });
+
+  final WeatherError? error;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final cs = context.cs;
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 16),
+      decoration: BoxDecoration(
+        color: cs.onSurface.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            error == WeatherError.api ? Icons.cloud_off : Icons.wifi_off,
+            size: 26,
+            color: cs.onSurface.withValues(alpha: 0.35),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            l.t(error == WeatherError.api ? 'wUnavailable' : 'wNetwork'),
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: cs.onSurface.withValues(alpha: 0.65),
+              fontSize: 12,
+              height: 1.6,
             ),
+          ),
+          const SizedBox(height: 6),
+          TextButton(onPressed: onRetry, child: Text(l.t('wRetry'))),
+        ],
+      ),
+    );
+  }
+}
+
+Future<void> showWeatherSheet(
+    BuildContext context,
+    WeatherController controller,
+    ) {
+  return showAppSheet<void>(context, (ctx) {
+    final l = ctx.l10n;
+    final cs = ctx.cs;
+
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (ctx, _) {
+        final data = controller.snapshot;
+
+        if (data == null) {
+          if (controller.loading) {
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 40),
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
+          return WeatherErrorBox(
+            error: controller.error,
+            onRetry: () => controller.refresh(force: true),
           );
         }
+
         return SingleChildScrollView(
           padding: const EdgeInsets.only(bottom: 16),
           child: Column(
@@ -1504,7 +1730,7 @@ Future<void> showWeatherSheet(BuildContext context, WeatherController c) {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '${s.now.temp}°',
+                    '${data.now.temp}°',
                     style: TextStyle(
                       color: cs.onSurface,
                       fontSize: 44,
@@ -1517,8 +1743,8 @@ Future<void> showWeatherSheet(BuildContext context, WeatherController c) {
                     child: Padding(
                       padding: const EdgeInsets.only(bottom: 6),
                       child: Text(
-                        '${l.isZh ? s.now.desc : descEn(s.now.desc)} · '
-                            '${s.now.city}',
+                        '${l.isZh ? data.now.desc : descEn(data.now.desc)} · '
+                            '${data.now.city}',
                         style: TextStyle(
                           color: cs.onSurface.withValues(alpha: 0.6),
                           fontSize: 12,
@@ -1529,7 +1755,7 @@ Future<void> showWeatherSheet(BuildContext context, WeatherController c) {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 6),
                     child: Text(
-                      s.now.time,
+                      data.now.reportTime,
                       style: TextStyle(
                         color: cs.onSurface.withValues(alpha: 0.35),
                         fontSize: 10,
@@ -1539,16 +1765,16 @@ Future<void> showWeatherSheet(BuildContext context, WeatherController c) {
                 ],
               ),
               const SizedBox(height: 14),
-              MetricGrid(snap: s),
-              if (s.hours.isNotEmpty) ...[
+              WeatherMetrics(snapshot: data),
+              if (data.hours.isNotEmpty) ...[
                 const SizedBox(height: 18),
                 SheetTitle(l.t('wHourly')),
-                HourStrip(hours: s.hours),
+                HourStrip(hours: data.hours),
               ],
-              if (s.days.isNotEmpty) ...[
+              if (data.days.isNotEmpty) ...[
                 const SizedBox(height: 18),
                 SheetTitle(l.t('wDaily')),
-                DayList(days: s.days),
+                DailyList(days: data.days),
               ],
               const SizedBox(height: 12),
               Text(
@@ -1566,23 +1792,25 @@ Future<void> showWeatherSheet(BuildContext context, WeatherController c) {
   });
 }
 
+/* =============================== home page ============================= */
+
 class HomePage extends StatefulWidget {
   const HomePage({
     super.key,
     required this.weather,
-    required this.hour,
-    required this.minute,
+    required this.alarmHour,
+    required this.alarmMinute,
     required this.wallpaper,
     required this.ringtone,
-    required this.onAlarm,
+    required this.onOpenAlarm,
   });
 
   final WeatherController weather;
-  final int hour;
-  final int minute;
+  final int alarmHour;
+  final int alarmMinute;
   final String? wallpaper;
   final String? ringtone;
-  final VoidCallback onAlarm;
+  final VoidCallback onOpenAlarm;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -1590,68 +1818,83 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final AudioPlayer _player = AudioPlayer();
-  StreamSubscription<PlayerState>? _sub;
+
+  StreamSubscription<PlayerState>? _playerSub;
   Timer? _ticker;
 
   DateTime _now = DateTime.now();
-  DateTime _focused = DateTime.now();
-  DateTime _selected = DateTime.now();
+  DateTime _focusedDay = DateTime.now();
+  DateTime _selectedDay = DateTime.now();
 
-  PlayerState _state = PlayerState.stopped;
-  bool _cal = false;
+  PlayerState _playerState = PlayerState.stopped;
+  bool _showCalendar = false;
   bool _ringing = false;
-  String? _fired;
-  int _qi = 1;
+  String? _firedKey;
+  int _quoteIndex = 1;
 
   @override
   void initState() {
     super.initState();
-    _qi = rnd.nextInt(6) + 1;
-    _sub = _player.onPlayerStateChanged.listen((s) {
-      if (mounted) setState(() => _state = s);
+    _quoteIndex = rnd.nextInt(6) + 1;
+    _playerSub = _player.onPlayerStateChanged.listen((state) {
+      if (mounted) setState(() => _playerState = state);
     });
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
   }
 
   @override
-  void didUpdateWidget(covariant HomePage old) {
-    super.didUpdateWidget(old);
-    if (old.hour != widget.hour || old.minute != widget.minute) _fired = null;
+  void didUpdateWidget(covariant HomePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.alarmHour != widget.alarmHour ||
+        oldWidget.alarmMinute != widget.alarmMinute) {
+      _firedKey = null;
+    }
   }
 
   @override
   void dispose() {
-    _sub?.cancel();
-    _sub = null;
+    // 1) 先取消音频订阅，避免 dispose 后回调触发 setState
+    _playerSub?.cancel();
+    _playerSub = null;
+    // 2) 取消时钟定时器
     _ticker?.cancel();
     _ticker = null;
+    // 3) 最后释放原生播放器
     _player.dispose();
     super.dispose();
   }
 
   void _tick() {
     if (!mounted) return;
-    final n = DateTime.now();
-    setState(() => _now = n);
-    if (n.hour == widget.hour && n.minute == widget.minute) {
-      final key = '${ymd(n)} ${n.hour}:${n.minute}';
-      if (_fired != key) {
-        _fired = key;
-        unawaited(_ring());
-      }
+    final now = DateTime.now();
+    setState(() => _now = now);
+    _checkAlarm(now);
+  }
+
+  void _checkAlarm(DateTime now) {
+    if (now.hour != widget.alarmHour || now.minute != widget.alarmMinute) {
+      return;
     }
+    final key = '${ymd(now)} ${now.hour}:${now.minute}';
+    if (_firedKey == key) return;
+    _firedKey = key;
+    unawaited(_ring());
   }
 
   Future<void> _ring() async {
     if (_ringing || !mounted) return;
     _ringing = true;
+
     final quote = context.t('q${rnd.nextInt(6) + 1}');
     await _startAudio();
+
     if (!mounted) {
       _ringing = false;
+      await _stopAudio();
       return;
     }
-    await showWakeUp(context, quote);
+
+    await showWakeUpOverlay(context, quote);
     _ringing = false;
     await _stopAudio();
   }
@@ -1660,39 +1903,42 @@ class _HomePageState extends State<HomePage> {
     try {
       await _player.setReleaseMode(ReleaseMode.loop);
       await _player.setVolume(1);
-      final p = widget.ringtone;
-      if (p != null && p.isNotEmpty && File(p).existsSync()) {
-        await _player.play(DeviceFileSource(p));
+      final path = widget.ringtone;
+      if (path != null && path.isNotEmpty && File(path).existsSync()) {
+        await _player.play(DeviceFileSource(path));
       } else {
         await _player.play(AssetSource('Ring10.wav'));
       }
     } catch (e) {
-      debugPrint('alarm audio: $e');
+      debugPrint('alarm audio failed: $e');
     }
   }
 
   Future<void> _stopAudio() async {
     try {
       await _player.stop();
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('stop alarm failed: $e');
+    }
   }
 
-  String _greet(L10n l) {
-    final h = _now.hour;
-    if (h < 6) return l.t('hiNight');
-    if (h < 12) return l.t('hiMorning');
-    if (h < 18) return l.t('hiNoon');
-    return l.t('hiEvening');
+  String _greeting(L10n l) {
+    final hour = _now.hour;
+    if (hour < 6) return l.t('greetNight');
+    if (hour < 12) return l.t('greetMorning');
+    if (hour < 18) return l.t('greetNoon');
+    return l.t('greetEvening');
   }
 
   @override
   Widget build(BuildContext context) {
-    final l = context.l;
+    final l = context.l10n;
     final night = _now.hour >= 18 || _now.hour < 6;
+
     return Stack(
       fit: StackFit.expand,
       children: [
-        _bg(night),
+        _buildBackground(night),
         DecoratedBox(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -1700,9 +1946,9 @@ class _HomePageState extends State<HomePage> {
               end: Alignment.bottomCenter,
               colors: night
                   ? const [
-                Color(0x8C000000),
+                Color(0x94000000),
                 Color(0x33000000),
-                Color(0xE0000000),
+                Color(0xE6000000),
               ]
                   : const [
                 Color(0x6B000000),
@@ -1736,7 +1982,7 @@ class _HomePageState extends State<HomePage> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            _greet(l),
+                            _greeting(l),
                             style: const TextStyle(
                               color: Color(0xB3FFFFFF),
                               fontSize: 12,
@@ -1747,7 +1993,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                     IconButton(
                       tooltip: l.t('alarm'),
-                      onPressed: widget.onAlarm,
+                      onPressed: widget.onOpenAlarm,
                       icon: const Icon(
                         Icons.alarm_add_outlined,
                         color: Colors.white,
@@ -1762,53 +2008,63 @@ class _HomePageState extends State<HomePage> {
                   child: Center(
                     child: GestureDetector(
                       behavior: HitTestBehavior.opaque,
-                      onTap: () => setState(() => _cal = !_cal),
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 400),
-                        switchInCurve: Curves.easeOutCubic,
-                        switchOutCurve: Curves.easeInCubic,
-                        transitionBuilder: (child, a) => FadeTransition(
-                          opacity: a,
-                          child: ScaleTransition(
-                            scale: Tween<double>(begin: 0.92, end: 1)
-                                .animate(a),
-                            child: child,
-                          ),
+                      onTap: () => setState(() => _showCalendar = !_showCalendar),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 360),
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 400),
+                          switchInCurve: Curves.easeOutCubic,
+                          switchOutCurve: Curves.easeInCubic,
+                          transitionBuilder: (child, animation) {
+                            return FadeTransition(
+                              opacity: animation,
+                              child: ScaleTransition(
+                                scale: Tween<double>(
+                                  begin: 0.92,
+                                  end: 1,
+                                ).animate(animation),
+                                child: child,
+                              ),
+                            );
+                          },
+                          child: _showCalendar
+                              ? MiniCalendar(
+                            key: const ValueKey('mini-calendar'),
+                            focusedDay: _focusedDay,
+                            selectedDay: _selectedDay,
+                            onFocused: (day) =>
+                                setState(() => _focusedDay = day),
+                            onSelected: (selected, focused) {
+                              setState(() {
+                                _selectedDay = selected;
+                                _focusedDay = focused;
+                              });
+                            },
+                          )
+                              : _buildClock(l),
                         ),
-                        child: _cal
-                            ? MiniCalendar(
-                          key: const ValueKey('cal'),
-                          focused: _focused,
-                          selected: _selected,
-                          onFocused: (d) =>
-                              setState(() => _focused = d),
-                          onSelected: (s, f) => setState(() {
-                            _selected = s;
-                            _focused = f;
-                          }),
-                        )
-                            : _clock(l),
                       ),
                     ),
                   ),
                 ),
-                _quoteStrip(l),
+                _buildQuoteStrip(l),
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    Expanded(child: _weatherCard(l)),
+                    Expanded(child: _buildWeatherCard(l)),
                     const SizedBox(width: 12),
                     Expanded(
                       child: GlassCard(
-                        icon: _state == PlayerState.playing
+                        icon: _playerState == PlayerState.playing
                             ? Icons.notifications_active
                             : Icons.alarm,
-                        title: _state == PlayerState.playing
+                        title: _playerState == PlayerState.playing
                             ? l.t('alarmRinging')
                             : l.t('alarm'),
-                        value: '${two(widget.hour)}:${two(widget.minute)}',
+                        value:
+                        '${two(widget.alarmHour)}:${two(widget.alarmMinute)}',
                         subtitle: l.t('dailyAlarm'),
-                        onTap: widget.onAlarm,
+                        onTap: widget.onOpenAlarm,
                       ),
                     ),
                   ],
@@ -1821,23 +2077,23 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _bg(bool night) {
-    final p = widget.wallpaper;
-    if (p != null && p.isNotEmpty) {
-      final f = File(p);
-      if (f.existsSync()) {
+  Widget _buildBackground(bool night) {
+    final path = widget.wallpaper;
+    if (path != null && path.isNotEmpty) {
+      final file = File(path);
+      if (file.existsSync()) {
         return Image.file(
-          f,
-          key: ValueKey(p),
+          file,
+          key: ValueKey(path),
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _bgDefault(night),
+          errorBuilder: (_, __, ___) => _defaultBackground(night),
         );
       }
     }
-    return _bgDefault(night);
+    return _defaultBackground(night);
   }
 
-  Widget _bgDefault(bool night) {
+  Widget _defaultBackground(bool night) {
     if (night) {
       return const DecoratedBox(
         decoration: BoxDecoration(
@@ -1852,19 +2108,21 @@ class _HomePageState extends State<HomePage> {
     return Image.asset(
       'assets/sunset.jpg',
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => const DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFFFF8A65), Color(0xFFFFB74D), Color(0xFF4A3AFF)],
+      errorBuilder: (_, __, ___) {
+        return const DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFFFF8A65), Color(0xFFFFB74D), Color(0xFF4A3AFF)],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
-  Widget _clock(L10n l) {
+  Widget _buildClock(L10n l) {
     return Column(
       key: const ValueKey('clock'),
       mainAxisSize: MainAxisSize.min,
@@ -1918,7 +2176,7 @@ class _HomePageState extends State<HomePage> {
             ),
             const SizedBox(width: 4),
             Text(
-              l.t(_cal ? 'tapTime' : 'tapCalendar'),
+              l.t(_showCalendar ? 'tapTime' : 'tapCalendar'),
               style: const TextStyle(color: Color(0x80FFFFFF), fontSize: 11),
             ),
           ],
@@ -1927,7 +2185,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _quoteStrip(L10n l) {
+  Widget _buildQuoteStrip(L10n l) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(18),
       child: BackdropFilter(
@@ -1941,11 +2199,15 @@ class _HomePageState extends State<HomePage> {
           ),
           child: Row(
             children: [
-              const Icon(Icons.favorite, size: 13, color: Color(0xFFFFB4C1)),
+              const Icon(
+                Icons.favorite,
+                size: 13,
+                color: Color(0xFFFFB4C1),
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  l.t('q$_qi'),
+                  l.t('q$_quoteIndex'),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -1962,29 +2224,33 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _weatherCard(L10n l) {
-    return AnimatedBuilder(
-      animation: widget.weather,
+  Widget _buildWeatherCard(L10n l) {
+    return ListenableBuilder(
+      listenable: widget.weather,
       builder: (context, _) {
-        final s = widget.weather.data;
-        if (s == null) {
+        final data = widget.weather.snapshot;
+
+        if (data == null) {
           return GlassCard(
             icon: Icons.wb_cloudy_outlined,
             title: l.t('weather'),
             value: l.t(
-              widget.weather.error == 'api' ? 'wUnavailable' : 'wNetwork',
+              widget.weather.error == WeatherError.api
+                  ? 'wUnavailable'
+                  : 'wNetwork',
             ),
             subtitle: l.t('wRetry'),
             onTap: () => showWeatherSheet(context, widget.weather),
           );
         }
+
         return GlassCard(
           icon: Icons.wb_cloudy_outlined,
           title: l.t('weather'),
-          value: '${s.now.temp}°C  '
-              '${l.isZh ? s.now.desc : descEn(s.now.desc)}',
-          subtitle: '${l.t('humidity')} ${s.now.humidity}% · '
-              '${s.now.windDir} ${s.now.windPower}',
+          value: '${data.now.temp}°C  '
+              '${l.isZh ? data.now.desc : descEn(data.now.desc)}',
+          subtitle: '${l.t('humidity')} ${data.now.humidity}% · '
+              '${data.now.windDir} ${data.now.windPower}',
           onTap: () => showWeatherSheet(context, widget.weather),
         );
       },
@@ -1992,19 +2258,24 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
+/* ============================= weather page ============================ */
+
 class WeatherPage extends StatelessWidget {
   const WeatherPage({super.key, required this.weather});
+
   final WeatherController weather;
 
   @override
   Widget build(BuildContext context) {
-    final l = context.l;
+    final l = context.l10n;
     final cs = context.cs;
+
     return SafeArea(
       child: ListenableBuilder(
         listenable: weather,
         builder: (context, _) {
-          final s = weather.data;
+          final data = weather.snapshot;
+
           return RefreshIndicator(
             onRefresh: () => weather.refresh(force: true),
             child: ListView(
@@ -2026,7 +2297,7 @@ class WeatherPage extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            l.t('weather'),
+                            l.t('wSource'),
                             style: TextStyle(
                               color: cs.onSurface.withValues(alpha: 0.5),
                               fontSize: 12,
@@ -2044,34 +2315,28 @@ class WeatherPage extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 18),
-                if (s == null && weather.loading)
+                if (data == null && weather.loading)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 60),
                     child: Center(child: CircularProgressIndicator()),
                   )
-                else if (s == null)
-                  GlassCard(
-                    icon: Icons.cloud_off,
-                    title: l.t('weather'),
-                    value: l.t(
-                      weather.error == 'api' ? 'wUnavailable' : 'wNetwork',
-                    ),
-                    subtitle: l.t('wRetry'),
-                    onImage: false,
-                    onTap: () => weather.refresh(force: true),
+                else if (data == null)
+                  WeatherErrorBox(
+                    error: weather.error,
+                    onRetry: () => weather.refresh(force: true),
                   )
                 else ...[
                     GlassCard(
                       icon: Icons.wb_sunny_outlined,
                       title: l.t('wCurrent'),
-                      value: '${s.now.temp}°C  '
-                          '${l.isZh ? s.now.desc : descEn(s.now.desc)}',
-                      subtitle: '${s.now.city} · ${s.now.time}',
+                      value: '${data.now.temp}°C  '
+                          '${l.isZh ? data.now.desc : descEn(data.now.desc)}',
+                      subtitle: '${data.now.city} · ${data.now.reportTime}',
                       onImage: false,
                     ),
                     const SizedBox(height: 14),
-                    MetricGrid(snap: s),
-                    if (s.hours.isNotEmpty) ...[
+                    WeatherMetrics(snapshot: data),
+                    if (data.hours.isNotEmpty) ...[
                       const SizedBox(height: 20),
                       Text(
                         l.t('wHourly'),
@@ -2082,9 +2347,9 @@ class WeatherPage extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      HourStrip(hours: s.hours),
+                      HourStrip(hours: data.hours),
                     ],
-                    if (s.days.isNotEmpty) ...[
+                    if (data.days.isNotEmpty) ...[
                       const SizedBox(height: 20),
                       Text(
                         l.t('wDaily'),
@@ -2095,7 +2360,7 @@ class WeatherPage extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 6),
-                      DayList(days: s.days),
+                      DailyList(days: data.days),
                     ],
                     const SizedBox(height: 16),
                     Text(
@@ -2115,6 +2380,8 @@ class WeatherPage extends StatelessWidget {
   }
 }
 
+/* ============================ calendar page ============================ */
+
 class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key});
 
@@ -2123,18 +2390,23 @@ class CalendarPage extends StatefulWidget {
 }
 
 class _CalendarPageState extends State<CalendarPage> {
-  DateTime _focused = DateTime.now();
-  DateTime _selected = DateTime.now();
-  Set<HScope> _scopes = HScope.values.toSet();
+  DateTime _focusedDay = DateTime.now();
+  DateTime _selectedDay = DateTime.now();
+  final Set<HolidayScope> _scopes = HolidayScope.values.toSet();
 
   @override
   Widget build(BuildContext context) {
-    final l = context.l;
+    final l = context.l10n;
     final cs = context.cs;
-    final month = holidays.forMonth(_focused.year, _focused.month, _scopes);
-    final days = month.keys.toList()..sort();
-    final picked = holidays
-        .forDate(_selected)
+
+    final monthHolidays = holidayEngine.forMonth(
+      _focusedDay.year,
+      _focusedDay.month,
+      _scopes,
+    );
+    final days = monthHolidays.keys.toList()..sort();
+    final dayHolidays = holidayEngine
+        .forDate(_selectedDay)
         .where((h) => _scopes.contains(h.scope))
         .toList();
 
@@ -2158,8 +2430,8 @@ class _CalendarPageState extends State<CalendarPage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${ymd(_selected)} '
-                          '${wdFull(_selected.weekday, l.isZh)}',
+                      '${ymd(_selectedDay)} '
+                          '${wdFull(_selectedDay.weekday, l.isZh)}',
                       style: TextStyle(
                         color: cs.onSurface.withValues(alpha: 0.5),
                         fontSize: 12,
@@ -2169,10 +2441,12 @@ class _CalendarPageState extends State<CalendarPage> {
                 ),
               ),
               TextButton(
-                onPressed: () => setState(() {
-                  _focused = DateTime.now();
-                  _selected = DateTime.now();
-                }),
+                onPressed: () {
+                  setState(() {
+                    _focusedDay = DateTime.now();
+                    _selectedDay = DateTime.now();
+                  });
+                },
                 child: Text(l.t('today')),
               ),
             ],
@@ -2190,10 +2464,15 @@ class _CalendarPageState extends State<CalendarPage> {
                 Row(
                   children: [
                     IconButton(
-                      onPressed: () => setState(() {
-                        _focused =
-                            DateTime(_focused.year, _focused.month - 1, 1);
-                      }),
+                      onPressed: () {
+                        setState(() {
+                          _focusedDay = DateTime(
+                            _focusedDay.year,
+                            _focusedDay.month - 1,
+                            1,
+                          );
+                        });
+                      },
                       icon: Icon(
                         Icons.chevron_left,
                         size: 18,
@@ -2203,7 +2482,7 @@ class _CalendarPageState extends State<CalendarPage> {
                     Expanded(
                       child: Center(
                         child: Text(
-                          monthLabel(_focused, l.isZh),
+                          monthLabel(_focusedDay, l.isZh),
                           style: TextStyle(
                             color: cs.onSurface,
                             fontSize: 14,
@@ -2213,10 +2492,15 @@ class _CalendarPageState extends State<CalendarPage> {
                       ),
                     ),
                     IconButton(
-                      onPressed: () => setState(() {
-                        _focused =
-                            DateTime(_focused.year, _focused.month + 1, 1);
-                      }),
+                      onPressed: () {
+                        setState(() {
+                          _focusedDay = DateTime(
+                            _focusedDay.year,
+                            _focusedDay.month + 1,
+                            1,
+                          );
+                        });
+                      },
                       icon: Icon(
                         Icons.chevron_right,
                         size: 18,
@@ -2228,19 +2512,23 @@ class _CalendarPageState extends State<CalendarPage> {
                 TableCalendar<Holiday>(
                   firstDay: DateTime.utc(1970, 1, 1),
                   lastDay: DateTime.utc(2100, 12, 31),
-                  focusedDay: _focused,
+                  focusedDay: _focusedDay,
                   headerVisible: false,
                   rowHeight: 40,
                   daysOfWeekHeight: 22,
                   calendarFormat: CalendarFormat.month,
                   availableCalendarFormats: const {CalendarFormat.month: ''},
-                  eventLoader: holidays.forDate,
-                  selectedDayPredicate: (d) => isSameDay(d, _selected),
-                  onDaySelected: (s, f) => setState(() {
-                    _selected = s;
-                    _focused = f;
-                  }),
-                  onPageChanged: (f) => setState(() => _focused = f),
+                  eventLoader: holidayEngine.forDate,
+                  selectedDayPredicate: (day) => isSameDay(day, _selectedDay),
+                  onDaySelected: (selected, focused) {
+                    setState(() {
+                      _selectedDay = selected;
+                      _focusedDay = focused;
+                    });
+                  },
+                  onPageChanged: (focused) {
+                    setState(() => _focusedDay = focused);
+                  },
                   calendarStyle: CalendarStyle(
                     outsideDaysVisible: false,
                     cellMargin: const EdgeInsets.all(2),
@@ -2256,38 +2544,45 @@ class _CalendarPageState extends State<CalendarPage> {
                       color: cs.primary.withValues(alpha: 0.28),
                       shape: BoxShape.circle,
                     ),
-                    todayTextStyle:
-                    TextStyle(color: cs.onSurface, fontSize: 13),
+                    todayTextStyle: TextStyle(
+                      color: cs.onSurface,
+                      fontSize: 13,
+                    ),
                     selectedDecoration: BoxDecoration(
                       color: cs.primary,
                       shape: BoxShape.circle,
                     ),
-                    selectedTextStyle:
-                    TextStyle(color: cs.onPrimary, fontSize: 13),
+                    selectedTextStyle: TextStyle(
+                      color: cs.onPrimary,
+                      fontSize: 13,
+                    ),
                   ),
                   calendarBuilders: CalendarBuilders<Holiday>(
-                    dowBuilder: (c, d) => Center(
-                      child: Text(
-                        wdShort(d.weekday, l.isZh),
-                        style: TextStyle(
-                          color: cs.onSurface.withValues(alpha: 0.35),
-                          fontSize: 10,
+                    dowBuilder: (c, day) {
+                      return Center(
+                        child: Text(
+                          wdShort(day.weekday, l.isZh),
+                          style: TextStyle(
+                            color: cs.onSurface.withValues(alpha: 0.35),
+                            fontSize: 10,
+                          ),
                         ),
-                      ),
-                    ),
-                    markerBuilder: (c, d, e) => e.isEmpty
-                        ? null
-                        : Align(
-                      alignment: Alignment.bottomCenter,
-                      child: Container(
-                        width: 4,
-                        height: 4,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFFFB74D),
-                          shape: BoxShape.circle,
+                      );
+                    },
+                    markerBuilder: (c, day, events) {
+                      if (events.isEmpty) return null;
+                      return Align(
+                        alignment: Alignment.bottomCenter,
+                        child: Container(
+                          width: 4,
+                          height: 4,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFFFB74D),
+                            shape: BoxShape.circle,
+                          ),
                         ),
-                      ),
-                    ),
+                      );
+                    },
                   ),
                 ),
               ],
@@ -2297,24 +2592,26 @@ class _CalendarPageState extends State<CalendarPage> {
           Wrap(
             spacing: 8,
             children: [
-              for (final s in HScope.values)
+              for (final scope in HolidayScope.values)
                 FilterChip(
                   label: Text(
-                    holidays.label(s, l.isZh),
+                    holidayEngine.scopeLabel(scope, l.isZh),
                     style: const TextStyle(fontSize: 11),
                   ),
-                  selected: _scopes.contains(s),
-                  onSelected: (on) => setState(() {
-                    if (on) {
-                      _scopes.add(s);
-                    } else {
-                      _scopes.remove(s);
-                    }
-                  }),
+                  selected: _scopes.contains(scope),
+                  onSelected: (on) {
+                    setState(() {
+                      if (on) {
+                        _scopes.add(scope);
+                      } else {
+                        _scopes.remove(scope);
+                      }
+                    });
+                  },
                 ),
             ],
           ),
-          if (picked.isNotEmpty) ...[
+          if (dayHolidays.isNotEmpty) ...[
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(14),
@@ -2332,7 +2629,7 @@ class _CalendarPageState extends State<CalendarPage> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      picked.map((h) => h.name(l.isZh)).join(' · '),
+                      dayHolidays.map((h) => h.name(l.isZh)).join(' · '),
                       style: TextStyle(
                         color: cs.onSurface,
                         fontSize: 12,
@@ -2363,7 +2660,7 @@ class _CalendarPageState extends State<CalendarPage> {
               ),
             )
           else
-            for (final d in days)
+            for (final day in days)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Row(
@@ -2378,7 +2675,7 @@ class _CalendarPageState extends State<CalendarPage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        '$d',
+                        '$day',
                         style: TextStyle(
                           color: cs.onSurface,
                           fontSize: 13,
@@ -2391,14 +2688,14 @@ class _CalendarPageState extends State<CalendarPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          for (final h in month[d]!)
+                          for (final holiday in monthHolidays[day]!)
                             Padding(
                               padding: const EdgeInsets.symmetric(vertical: 2),
                               child: Row(
                                 children: [
                                   Expanded(
                                     child: Text(
-                                      h.name(l.isZh),
+                                      holiday.name(l.isZh),
                                       style: TextStyle(
                                         color: cs.onSurface
                                             .withValues(alpha: 0.85),
@@ -2407,7 +2704,10 @@ class _CalendarPageState extends State<CalendarPage> {
                                     ),
                                   ),
                                   Text(
-                                    holidays.label(h.scope, l.isZh),
+                                    holidayEngine.scopeLabel(
+                                      holiday.scope,
+                                      l.isZh,
+                                    ),
                                     style: TextStyle(
                                       color: cs.onSurface
                                           .withValues(alpha: 0.35),
@@ -2429,6 +2729,8 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 }
 
+/* ============================= tree hole page ========================== */
+
 class TreeHolePage extends StatefulWidget {
   const TreeHolePage({super.key});
 
@@ -2440,16 +2742,16 @@ class _TreeHolePageState extends State<TreeHolePage> {
   bool _loading = false;
   bool _applied = false;
   bool _connected = false;
-  Anon? _cur;
-  int _req = 0;
+  AnonPost? _current;
+  int _requestId = 0;
 
-  void _snack(String m) {
+  void _snack(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(m),
+          content: Text(message),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -2461,65 +2763,77 @@ class _TreeHolePageState extends State<TreeHolePage> {
       _loading = true;
       _applied = false;
       _connected = false;
-      _cur = null;
+      _current = null;
     });
+
     await Future<void>.delayed(const Duration(seconds: 3));
     if (!mounted) return;
+
     setState(() {
       _loading = false;
-      _cur = _anonPool[rnd.nextInt(_anonPool.length)];
+      _current = anonPool[rnd.nextInt(anonPool.length)];
     });
   }
 
   Future<void> _apply() async {
-    final p = _cur;
-    if (p == null || _applied) return;
+    final post = _current;
+    if (post == null || _applied) return;
+
     setState(() => _applied = true);
     _snack(context.t('applied'));
-    final id = ++_req;
+
+    final id = ++_requestId;
     await Future<void>.delayed(const Duration(seconds: 4));
-    if (!mounted || id != _req) return;
+    if (!mounted || id != _requestId) return;
+
     if (rnd.nextDouble() > 0.7) {
       setState(() => _applied = false);
       _snack(context.t('noReply'));
       return;
     }
+
     setState(() => _connected = true);
+
     await showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: ctx.cs.surfaceContainerHigh,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-        title: Text(
-          ctx.t('consentTitle'),
-          style: TextStyle(
-            color: ctx.cs.onSurface,
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
+      builder: (ctx) {
+        return AlertDialog(
+          backgroundColor: ctx.cs.surfaceContainerHigh,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22),
           ),
-        ),
-        content: Text(
-          ctx.t('consentBody', {'name': p.alias}),
-          style: TextStyle(
-            color: ctx.cs.onSurface.withValues(alpha: 0.7),
-            fontSize: 13,
-            height: 1.7,
+          title: Text(
+            ctx.t('consentTitle'),
+            style: TextStyle(
+              color: ctx.cs.onSurface,
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(ctx.t('sayHi')),
+          content: Text(
+            ctx.t('consentBody', {'name': post.alias}),
+            style: TextStyle(
+              color: ctx.cs.onSurface.withValues(alpha: 0.7),
+              fontSize: 13,
+              height: 1.7,
+            ),
           ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(ctx.t('sayHi')),
+            ),
+          ],
+        );
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final l = context.l;
+    final l = context.l10n;
     final cs = context.cs;
+
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
@@ -2558,7 +2872,7 @@ class _TreeHolePageState extends State<TreeHolePage> {
               ],
             ),
             const SizedBox(height: 20),
-            Expanded(child: Center(child: _body(l, cs))),
+            Expanded(child: Center(child: _buildBody(l, cs))),
             const SizedBox(height: 14),
             SizedBox(
               height: 52,
@@ -2575,7 +2889,7 @@ class _TreeHolePageState extends State<TreeHolePage> {
                 label: Text(
                   _loading
                       ? l.t('matching')
-                      : (_cur == null ? l.t('match') : l.t('rematch')),
+                      : (_current == null ? l.t('match') : l.t('rematch')),
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
@@ -2589,7 +2903,7 @@ class _TreeHolePageState extends State<TreeHolePage> {
     );
   }
 
-  Widget _body(L10n l, ColorScheme cs) {
+  Widget _buildBody(L10n l, ColorScheme cs) {
     if (_loading) {
       return Column(
         mainAxisSize: MainAxisSize.min,
@@ -2610,8 +2924,9 @@ class _TreeHolePageState extends State<TreeHolePage> {
         ],
       );
     }
-    final p = _cur;
-    if (p == null) {
+
+    final post = _current;
+    if (post == null) {
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -2632,6 +2947,7 @@ class _TreeHolePageState extends State<TreeHolePage> {
         ],
       );
     }
+
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -2649,7 +2965,7 @@ class _TreeHolePageState extends State<TreeHolePage> {
                 radius: 18,
                 backgroundColor: cs.onSurface.withValues(alpha: 0.1),
                 child: Text(
-                  p.alias.substring(0, 1),
+                  post.alias.substring(0, 1),
                   style: TextStyle(color: cs.onSurface, fontSize: 14),
                 ),
               ),
@@ -2659,7 +2975,7 @@ class _TreeHolePageState extends State<TreeHolePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      p.alias,
+                      post.alias,
                       style: TextStyle(
                         color: cs.onSurface,
                         fontSize: 14,
@@ -2668,7 +2984,7 @@ class _TreeHolePageState extends State<TreeHolePage> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      p.meta(l.isZh),
+                      post.meta(l.isZh),
                       style: TextStyle(
                         color: cs.onSurface.withValues(alpha: 0.4),
                         fontSize: 11,
@@ -2678,8 +2994,10 @@ class _TreeHolePageState extends State<TreeHolePage> {
                 ),
               ),
               Container(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 3,
+                ),
                 decoration: BoxDecoration(
                   color: cs.onSurface.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(10),
@@ -2696,7 +3014,7 @@ class _TreeHolePageState extends State<TreeHolePage> {
           ),
           const SizedBox(height: 16),
           Text(
-            '「${p.text(l.isZh)}」',
+            '「${post.text(l.isZh)}」',
             style: TextStyle(
               color: cs.onSurface,
               fontSize: 16,
@@ -2734,135 +3052,162 @@ class _TreeHolePageState extends State<TreeHolePage> {
   }
 }
 
+/* ============================== settings page ========================== */
+
 class SettingsPage extends StatefulWidget {
-  const SettingsPage({super.key, required this.onAlarm});
-  final VoidCallback onAlarm;
+  const SettingsPage({super.key, required this.onOpenAlarm});
+
+  final VoidCallback onOpenAlarm;
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  int _cache = 0;
+  int _cacheBytes = 0;
 
   @override
   void initState() {
     super.initState();
-    _measure();
+    _refreshCacheSize();
   }
 
-  void _snack(String m) {
+  void _snack(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
-        SnackBar(content: Text(m), behavior: SnackBarBehavior.floating),
+        SnackBar(
+          content: Text(message),
+          behavior: SnackBarBehavior.floating,
+        ),
       );
   }
 
-  Future<int> _dirSize(Directory dir) async {
+  Future<int> _directorySize(Directory dir) async {
     var total = 0;
     if (!await dir.exists()) return 0;
-    await for (final e in dir.list(recursive: true, followLinks: false)) {
-      if (e is File) {
+    await for (final entity in dir.list(recursive: true, followLinks: false)) {
+      if (entity is File) {
         try {
-          total += await e.length();
-        } catch (_) {}
+          total += await entity.length();
+        } catch (_) {
+          continue;
+        }
       }
     }
     return total;
   }
 
-  Future<void> _measure() async {
-    final d = await getTemporaryDirectory();
-    final size = await _dirSize(d);
-    if (mounted) setState(() => _cache = size);
-  }
-
-  Future<String> _persist(String src, String name) async {
-    final dir = await getApplicationDocumentsDirectory();
-    final dot = src.lastIndexOf('.');
-    final ext = dot >= 0 ? src.substring(dot) : '';
-    final dest =
-    File('${dir.path}/${name}_${DateTime.now().millisecondsSinceEpoch}$ext');
-    await File(src).copy(dest.path);
-    return dest.path;
-  }
-
-  Future<String?> _pick(FileType type) async {
-    final r = await FilePicker.platform.pickFiles(type: type);
-    if (r == null || r.files.isEmpty) return null;
-    return r.files.first.path;
-  }
-
-  Future<void> _wallpaper() async {
+  Future<void> _refreshCacheSize() async {
     try {
-      final p = await _pick(FileType.image);
-      if (p == null) return;
-      await AppStore.I.setWallpaper(await _persist(p, 'wallpaper'));
-      _snack(context.t('wallpaperLocal'));
-    } catch (e) {
-      _snack('$e');
+      final dir = await getTemporaryDirectory();
+      final size = await _directorySize(dir);
+      if (mounted) setState(() => _cacheBytes = size);
+    } catch (_) {
+      if (mounted) setState(() => _cacheBytes = 0);
     }
   }
 
-  Future<void> _ringtone() async {
+  Future<String> _persist(String source, String name) async {
+    final dir = await getApplicationDocumentsDirectory();
+    final dot = source.lastIndexOf('.');
+    final ext = dot >= 0 ? source.substring(dot) : '';
+    final target = File(
+      '${dir.path}/${name}_${DateTime.now().millisecondsSinceEpoch}$ext',
+    );
+    await File(source).copy(target.path);
+    return target.path;
+  }
+
+  Future<String?> _pickFile(FileType type) async {
+    final result = await FilePicker.platform.pickFiles(type: type);
+    if (result == null || result.files.isEmpty) return null;
+    return result.files.first.path;
+  }
+
+  Future<void> _pickWallpaper() async {
     try {
-      final p = await _pick(FileType.audio);
-      if (p == null) return;
-      await AppStore.I.setRingtone(await _persist(p, 'ringtone'));
-      _snack(context.t('ringtoneLocal'));
+      final path = await _pickFile(FileType.image);
+      if (path == null) return;
+      final saved = await _persist(path, 'wallpaper');
+      await AppStore.I.setWallpaper(saved);
+      if (mounted) _snack(context.t('wallpaperLocal'));
     } catch (e) {
-      _snack('$e');
+      if (mounted) _snack('$e');
+    }
+  }
+
+  Future<void> _pickRingtone() async {
+    try {
+      final path = await _pickFile(FileType.audio);
+      if (path == null) return;
+      final saved = await _persist(path, 'ringtone');
+      await AppStore.I.setRingtone(saved);
+      if (mounted) _snack(context.t('ringtoneLocal'));
+    } catch (e) {
+      if (mounted) _snack('$e');
     }
   }
 
   Future<void> _clearCache() async {
-    final keep = <String>{
-      if (AppStore.I.wallpaper != null) AppStore.I.wallpaper!,
-      if (AppStore.I.ringtone != null) AppStore.I.ringtone!,
-    };
+    final store = AppStore.I;
+    final keep = <String>{};
+    if (store.wallpaper != null) keep.add(store.wallpaper!);
+    if (store.ringtone != null) keep.add(store.ringtone!);
+
     try {
-      for (final dir in [
+      final directories = <Directory>[
         await getTemporaryDirectory(),
         await getApplicationDocumentsDirectory(),
-      ]) {
+      ];
+      for (final dir in directories) {
         if (!await dir.exists()) continue;
-        await for (final e in dir.list(followLinks: false)) {
-          if (e is! File || keep.contains(e.path)) continue;
+        await for (final entity in dir.list(followLinks: false)) {
+          if (entity is! File) continue;
+          if (keep.contains(entity.path)) continue;
           try {
-            await e.delete();
-          } catch (_) {}
+            await entity.delete();
+          } catch (_) {
+            continue;
+          }
         }
       }
       PaintingBinding.instance.imageCache.clear();
       PaintingBinding.instance.imageCache.clearLiveImages();
-      if (mounted) setState(() => _cache = 0);
-      _snack(context.t('cacheCleared'));
+      if (mounted) {
+        setState(() => _cacheBytes = 0);
+        _snack(context.t('cacheCleared'));
+      }
     } catch (e) {
-      _snack('$e');
+      if (mounted) _snack('$e');
     }
   }
 
-  Future<void> _language() async {
+  Future<void> _pickLanguage() async {
+    final store = AppStore.I;
     await showAppSheet<void>(context, (ctx) {
-      final l = ctx.l;
+      final l = ctx.l10n;
+      final options = <List<String>>[
+        ['system', l.t('followSystem')],
+        ['zh', '中文'],
+        ['en', 'English'],
+      ];
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           SheetTitle(l.t('language')),
-          for (final e in [
-            ('system', l.t('followSystem')),
-            ('zh', '中文'),
-            ('en', 'English'),
-          ])
+          for (final option in options)
             ListTile(
-              title: Text(e.$2, style: TextStyle(color: ctx.cs.onSurface)),
-              trailing: AppStore.I.localeCode == e.$1
+              title: Text(
+                option[1],
+                style: TextStyle(color: ctx.cs.onSurface),
+              ),
+              trailing: store.localeCode == option[0]
                   ? Icon(Icons.check, size: 18, color: ctx.cs.primary)
                   : null,
               onTap: () async {
-                await AppStore.I.setLocale(e.$1);
+                await store.setLocale(option[0]);
                 if (ctx.mounted) Navigator.of(ctx).pop();
               },
             ),
@@ -2872,25 +3217,30 @@ class _SettingsPageState extends State<SettingsPage> {
     });
   }
 
-  Future<void> _theme() async {
+  Future<void> _pickTheme() async {
+    final store = AppStore.I;
     await showAppSheet<void>(context, (ctx) {
-      final l = ctx.l;
+      final l = ctx.l10n;
+      final options = <List<String>>[
+        ['dark', l.t('themeDark')],
+        ['light', l.t('themeLight')],
+        ['system', l.t('themeSystem')],
+      ];
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           SheetTitle(l.t('theme')),
-          for (final e in [
-            ('dark', l.t('themeDark')),
-            ('light', l.t('themeLight')),
-            ('system', l.t('followSystem')),
-          ])
+          for (final option in options)
             ListTile(
-              title: Text(e.$2, style: TextStyle(color: ctx.cs.onSurface)),
-              trailing: AppStore.I.themeCode == e.$1
+              title: Text(
+                option[1],
+                style: TextStyle(color: ctx.cs.onSurface),
+              ),
+              trailing: store.themeCode == option[0]
                   ? Icon(Icons.check, size: 18, color: ctx.cs.primary)
                   : null,
               onTap: () async {
-                await AppStore.I.setTheme(e.$1);
+                await store.setTheme(option[0]);
                 if (ctx.mounted) Navigator.of(ctx).pop();
               },
             ),
@@ -2906,21 +3256,22 @@ class _SettingsPageState extends State<SettingsPage> {
       _snack(context.t('bLocked'));
       return;
     }
-    final v = await showBirthday(
+    final value = await showBirthdayDialog(
       context,
       initial: store.birthday,
       allowCancel: true,
     );
-    if (v == null) return;
-    await store.setBirthday(v);
-    _snack(v);
+    if (value == null) return;
+    await store.setBirthday(value);
+    if (mounted) _snack(value);
   }
 
   @override
   Widget build(BuildContext context) {
-    final l = context.l;
+    final l = context.l10n;
     final cs = context.cs;
-    final s = AppStore.I;
+    final store = AppStore.I;
+
     return SafeArea(
       child: ListView(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 110),
@@ -2942,71 +3293,71 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
           const SizedBox(height: 20),
-          _Tile(
+          SettingsTile(
             icon: Icons.translate,
             title: l.t('language'),
-            value: switch (s.localeCode) {
-              'zh' => '中文',
-              'en' => 'English',
-              _ => l.t('followSystem'),
-            },
-            onTap: _language,
+            value: store.localeCode == 'zh'
+                ? '中文'
+                : store.localeCode == 'en'
+                ? 'English'
+                : l.t('followSystem'),
+            onTap: _pickLanguage,
           ),
-          _Tile(
+          SettingsTile(
             icon: Icons.brightness_6_outlined,
             title: l.t('theme'),
-            value: switch (s.themeCode) {
-              'light' => l.t('themeLight'),
-              'system' => l.t('followSystem'),
-              _ => l.t('themeDark'),
-            },
-            onTap: _theme,
+            value: store.themeCode == 'light'
+                ? l.t('themeLight')
+                : store.themeCode == 'system'
+                ? l.t('themeSystem')
+                : l.t('themeDark'),
+            onTap: _pickTheme,
           ),
-          _Tile(
+          SettingsTile(
             icon: Icons.alarm,
             title: l.t('alarm'),
-            value: '${two(s.alarmHour)}:${two(s.alarmMinute)} · '
+            value: '${two(store.alarmHour)}:${two(store.alarmMinute)} · '
                 '${l.t('dailyAlarm')}',
-            onTap: widget.onAlarm,
+            onTap: widget.onOpenAlarm,
           ),
-          _Tile(
+          SettingsTile(
             icon: Icons.cake_outlined,
             title: l.t('birthday'),
-            value: s.birthday ?? l.t('notSet'),
-            footnote: s.canEditBirthday ? null : l.t('bLocked'),
-            action: s.canEditBirthday ? l.t('edit') : null,
-            onTap: s.canEditBirthday ? _editBirthday : null,
+            value: store.birthday ?? l.t('notSet'),
+            footnote: store.canEditBirthday ? null : l.t('bLocked'),
+            actionLabel: store.canEditBirthday ? l.t('edit') : null,
+            onTap: store.canEditBirthday ? _editBirthday : null,
           ),
-          _Tile(
+          SettingsTile(
             icon: Icons.wallpaper_outlined,
             title: l.t('wallpaper'),
-            value: s.wallpaper == null
+            value: store.wallpaper == null
                 ? l.t('wallpaperDefault')
                 : l.t('wallpaperLocal'),
             buttons: [
-              (l.t('changeWallpaper'), _wallpaper),
+              (l.t('changeWallpaper'), _pickWallpaper),
               (l.t('resetDefault'), () => AppStore.I.setWallpaper(null)),
             ],
           ),
-          _Tile(
+          SettingsTile(
             icon: Icons.music_note_outlined,
             title: l.t('ringtone'),
-            value: s.ringtone == null
+            value: store.ringtone == null
                 ? l.t('ringtoneDefault')
                 : l.t('ringtoneLocal'),
             buttons: [
-              (l.t('changeRingtone'), _ringtone),
+              (l.t('changeRingtone'), _pickRingtone),
               (l.t('resetDefault'), () => AppStore.I.setRingtone(null)),
             ],
           ),
-          _Tile(
+          SettingsTile(
             icon: Icons.cleaning_services_outlined,
             title: l.t('clearCache'),
-            value: '${l.t('cacheSize')} ${bytesLabel(_cache)}',
-            action: l.t('clearCache'),
+            value: '${l.t('cacheSize')} ${bytesLabel(_cacheBytes)}',
+            actionLabel: l.t('clearCache'),
             onTap: _clearCache,
           ),
-          _Tile(
+          SettingsTile(
             icon: Icons.shield_outlined,
             title: l.t('privacy'),
             value: l.t('privacyBody'),
@@ -3014,7 +3365,7 @@ class _SettingsPageState extends State<SettingsPage> {
           const SizedBox(height: 6),
           Center(
             child: Text(
-              'Not alone 2.0.0',
+              'Not alone 2.1.0',
               style: TextStyle(
                 color: cs.onSurface.withValues(alpha: 0.25),
                 fontSize: 11,
@@ -3027,13 +3378,14 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 }
 
-class _Tile extends StatelessWidget {
-  const _Tile({
+class SettingsTile extends StatelessWidget {
+  const SettingsTile({
+    super.key,
     required this.icon,
     required this.title,
     required this.value,
     this.onTap,
-    this.action,
+    this.actionLabel,
     this.footnote,
     this.buttons,
   });
@@ -3042,13 +3394,14 @@ class _Tile extends StatelessWidget {
   final String title;
   final String value;
   final VoidCallback? onTap;
-  final String? action;
+  final String? actionLabel;
   final String? footnote;
   final List<(String, VoidCallback)>? buttons;
 
   @override
   Widget build(BuildContext context) {
     final cs = context.cs;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -3074,11 +3427,11 @@ class _Tile extends StatelessWidget {
                   ),
                 ),
               ),
-              if (action != null)
+              if (actionLabel != null)
                 TextButton(
                   onPressed: onTap,
                   child: Text(
-                    action!,
+                    actionLabel!,
                     style: TextStyle(color: cs.primary, fontSize: 12),
                   ),
                 )
@@ -3122,7 +3475,7 @@ class _Tile extends StatelessWidget {
             const SizedBox(height: 12),
             Row(
               children: [
-                for (final b in buttons!)
+                for (final button in buttons!)
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -3139,9 +3492,9 @@ class _Tile extends StatelessWidget {
                             ),
                             padding: EdgeInsets.zero,
                           ),
-                          onPressed: b.$2,
+                          onPressed: button.$2,
                           child: Text(
-                            b.$1,
+                            button.$1,
                             style: const TextStyle(fontSize: 12),
                           ),
                         ),
@@ -3157,114 +3510,128 @@ class _Tile extends StatelessWidget {
   }
 }
 
-Future<void> showCare(BuildContext context) {
+/* ================================ dialogs ============================== */
+
+Future<void> showCareDialog(BuildContext context) {
   return showDialog<void>(
     context: context,
     barrierDismissible: false,
-    builder: (ctx) => PopScope(
-      canPop: false,
-      child: AlertDialog(
-        backgroundColor: ctx.cs.surfaceContainerHigh,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        contentPadding: const EdgeInsets.fromLTRB(24, 26, 24, 22),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Icon(
-              Icons.favorite_rounded,
-              color: Color(0xFFFF8A9B),
-              size: 26,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              ctx.t('careBody'),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: ctx.cs.onSurface.withValues(alpha: 0.8),
-                fontSize: 14,
-                height: 1.9,
+    builder: (ctx) {
+      return PopScope(
+        canPop: false,
+        child: AlertDialog(
+          backgroundColor: ctx.cs.surfaceContainerHigh,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          contentPadding: const EdgeInsets.fromLTRB(24, 26, 24, 22),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Icon(
+                Icons.favorite_rounded,
+                color: Color(0xFFFF8A9B),
+                size: 26,
               ),
-            ),
-            const SizedBox(height: 22),
-            SizedBox(
-              height: 48,
-              child: FilledButton(
-                style: FilledButton.styleFrom(
-                  backgroundColor: ctx.cs.onSurface,
-                  foregroundColor: ctx.cs.surface,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                ),
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: Text(
-                  ctx.t('agree'),
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
+              const SizedBox(height: 16),
+              Text(
+                ctx.t('careBody'),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: ctx.cs.onSurface.withValues(alpha: 0.8),
+                  fontSize: 14,
+                  height: 1.9,
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 22),
+              SizedBox(
+                height: 48,
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: ctx.cs.onSurface,
+                    foregroundColor: ctx.cs.surface,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                  ),
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: Text(
+                    ctx.t('agree'),
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-    ),
+      );
+    },
   );
 }
 
-Future<String?> showBirthday(
+Future<String?> showBirthdayDialog(
     BuildContext context, {
       String? initial,
       bool allowCancel = false,
-    }) =>
-    showDialog<String>(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => PopScope(
+    }) {
+  return showDialog<String>(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) {
+      return PopScope(
         canPop: allowCancel,
-        child: _BirthdayDialog(initial: initial, allowCancel: allowCancel),
-      ),
-    );
+        child: BirthdayDialog(initial: initial, allowCancel: allowCancel),
+      );
+    },
+  );
+}
 
-class _BirthdayDialog extends StatefulWidget {
-  const _BirthdayDialog({this.initial, this.allowCancel = false});
+class BirthdayDialog extends StatefulWidget {
+  const BirthdayDialog({
+    super.key,
+    this.initial,
+    this.allowCancel = false,
+  });
+
   final String? initial;
   final bool allowCancel;
 
   @override
-  State<_BirthdayDialog> createState() => _BirthdayDialogState();
+  State<BirthdayDialog> createState() => _BirthdayDialogState();
 }
 
-class _BirthdayDialogState extends State<_BirthdayDialog> {
-  late final TextEditingController _c =
+class _BirthdayDialogState extends State<BirthdayDialog> {
+  late final TextEditingController _controller =
   TextEditingController(text: widget.initial ?? '');
-  String? _err;
+  String? _error;
 
   @override
   void dispose() {
-    _c.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
   void _submit() {
-    final v = _c.text.trim();
-    final d = parseYmd(v);
-    if (d == null) {
-      setState(() => _err = context.t('bFormat'));
+    final raw = _controller.text.trim();
+    final parsed = parseYmd(raw);
+    if (parsed == null) {
+      setState(() => _error = context.t('bFormat'));
       return;
     }
-    if (d.isAfter(DateTime.now())) {
-      setState(() => _err = context.t('bFuture'));
+    if (parsed.isAfter(DateTime.now())) {
+      setState(() => _error = context.t('bFuture'));
       return;
     }
-    Navigator.of(context).pop(ymd(d));
+    Navigator.of(context).pop(ymd(parsed));
   }
 
-  Future<void> _pick() async {
+  Future<void> _pickDate() async {
     final now = DateTime.now();
-    final parsed = parseYmd(_c.text) ?? DateTime(1998, 6, 1);
+    final parsed = parseYmd(_controller.text) ?? DateTime(1998, 6, 1);
     final picked = await showDatePicker(
       context: context,
       initialDate: parsed.isAfter(now) ? now : parsed,
@@ -3275,13 +3642,14 @@ class _BirthdayDialogState extends State<_BirthdayDialog> {
       confirmText: context.t('bSave'),
     );
     if (picked == null) return;
-    _c.text = ymd(picked);
-    setState(() => _err = null);
+    _controller.text = ymd(picked);
+    setState(() => _error = null);
   }
 
   @override
   Widget build(BuildContext context) {
     final cs = context.cs;
+
     return AlertDialog(
       backgroundColor: cs.surfaceContainerHigh,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -3307,7 +3675,7 @@ class _BirthdayDialogState extends State<_BirthdayDialog> {
           ),
           const SizedBox(height: 14),
           TextField(
-            controller: _c,
+            controller: _controller,
             autofocus: true,
             keyboardType: TextInputType.text,
             textInputAction: TextInputAction.done,
@@ -3318,12 +3686,12 @@ class _BirthdayDialogState extends State<_BirthdayDialog> {
               hintStyle: TextStyle(
                 color: cs.onSurface.withValues(alpha: 0.28),
               ),
-              errorText: _err,
+              errorText: _error,
               filled: true,
               fillColor: cs.onSurface.withValues(alpha: 0.06),
               suffixIcon: IconButton(
                 tooltip: context.t('bPick'),
-                onPressed: _pick,
+                onPressed: _pickDate,
                 icon: Icon(
                   Icons.calendar_month_outlined,
                   size: 20,
@@ -3374,37 +3742,38 @@ Future<(int, int)?> showAlarmSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (_) => _AlarmSheet(hour: hour, minute: minute),
+    builder: (_) => AlarmSheet(hour: hour, minute: minute),
   );
 }
 
-class _AlarmSheet extends StatefulWidget {
-  const _AlarmSheet({required this.hour, required this.minute});
+class AlarmSheet extends StatefulWidget {
+  const AlarmSheet({super.key, required this.hour, required this.minute});
+
   final int hour;
   final int minute;
 
   @override
-  State<_AlarmSheet> createState() => _AlarmSheetState();
+  State<AlarmSheet> createState() => _AlarmSheetState();
 }
 
-class _AlarmSheetState extends State<_AlarmSheet> {
-  late int _h = widget.hour.clamp(0, 23);
-  late int _m = widget.minute.clamp(0, 59);
-  late final FixedExtentScrollController _hc =
-  FixedExtentScrollController(initialItem: _h);
-  late final FixedExtentScrollController _mc =
-  FixedExtentScrollController(initialItem: _m);
+class _AlarmSheetState extends State<AlarmSheet> {
+  late int _hour = widget.hour.clamp(0, 23);
+  late int _minute = widget.minute.clamp(0, 59);
+  late final FixedExtentScrollController _hourController =
+  FixedExtentScrollController(initialItem: _hour);
+  late final FixedExtentScrollController _minuteController =
+  FixedExtentScrollController(initialItem: _minute);
 
   @override
   void dispose() {
-    _hc.dispose();
-    _mc.dispose();
+    _hourController.dispose();
+    _minuteController.dispose();
     super.dispose();
   }
 
-  Widget _wheel(
+  Widget _buildWheel(
       int count,
-      FixedExtentScrollController c,
+      FixedExtentScrollController controller,
       ValueChanged<int> onChanged,
       ) {
     final color = context.cs.onSurface;
@@ -3412,7 +3781,7 @@ class _AlarmSheetState extends State<_AlarmSheet> {
       width: 84,
       height: 172,
       child: ListWheelScrollView.useDelegate(
-        controller: c,
+        controller: controller,
         itemExtent: 46,
         diameterRatio: 1.6,
         perspective: 0.003,
@@ -3422,16 +3791,18 @@ class _AlarmSheetState extends State<_AlarmSheet> {
         onSelectedItemChanged: onChanged,
         childDelegate: ListWheelChildBuilderDelegate(
           childCount: count,
-          builder: (c, i) => Center(
-            child: Text(
-              two(i),
-              style: TextStyle(
-                color: color,
-                fontSize: 26,
-                fontWeight: FontWeight.w500,
+          builder: (context, index) {
+            return Center(
+              child: Text(
+                two(index),
+                style: TextStyle(
+                  color: color,
+                  fontSize: 26,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ),
     );
@@ -3440,6 +3811,7 @@ class _AlarmSheetState extends State<_AlarmSheet> {
   @override
   Widget build(BuildContext context) {
     final cs = context.cs;
+
     return Container(
       decoration: BoxDecoration(
         color: cs.surfaceContainerHigh,
@@ -3472,7 +3844,11 @@ class _AlarmSheetState extends State<_AlarmSheet> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _wheel(24, _hc, (v) => setState(() => _h = v)),
+                _buildWheel(
+                  24,
+                  _hourController,
+                      (value) => setState(() => _hour = value),
+                ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 2),
                   child: Text(
@@ -3484,12 +3860,16 @@ class _AlarmSheetState extends State<_AlarmSheet> {
                     ),
                   ),
                 ),
-                _wheel(60, _mc, (v) => setState(() => _m = v)),
+                _buildWheel(
+                  60,
+                  _minuteController,
+                      (value) => setState(() => _minute = value),
+                ),
               ],
             ),
             const SizedBox(height: 8),
             Text(
-              '${two(_h)}:${two(_m)}',
+              '${two(_hour)}:${two(_minute)}',
               style: TextStyle(
                 color: cs.onSurface.withValues(alpha: 0.55),
                 fontSize: 12,
@@ -3507,7 +3887,7 @@ class _AlarmSheetState extends State<_AlarmSheet> {
                     borderRadius: BorderRadius.circular(25),
                   ),
                 ),
-                onPressed: () => Navigator.of(context).pop((_h, _m)),
+                onPressed: () => Navigator.of(context).pop((_hour, _minute)),
                 child: Text(
                   context.t('save'),
                   style: const TextStyle(
@@ -3524,121 +3904,131 @@ class _AlarmSheetState extends State<_AlarmSheet> {
   }
 }
 
-Future<void> showWakeUp(BuildContext context, String quote) {
+Future<void> showWakeUpOverlay(BuildContext context, String quote) {
   return showGeneralDialog<void>(
     context: context,
     barrierDismissible: false,
     barrierLabel: 'alarm',
     barrierColor: Colors.white,
     transitionDuration: const Duration(milliseconds: 420),
-    transitionBuilder: (ctx, a, _, child) =>
-        FadeTransition(opacity: a, child: child),
-    pageBuilder: (ctx, _, __) => Material(
-      type: MaterialType.transparency,
-      child: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFFFFFDF7), Colors.white, Color(0xFFFFEFD5)],
+    transitionBuilder: (ctx, animation, _, child) {
+      return FadeTransition(opacity: animation, child: child);
+    },
+    pageBuilder: (ctx, _, __) {
+      return Material(
+        type: MaterialType.transparency,
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFFFFFDF7), Colors.white, Color(0xFFFFEFD5)],
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(28),
-            child: Column(
-              children: [
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Color(0x44FFB300),
-                        blurRadius: 40,
-                        spreadRadius: 12,
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.wb_sunny_rounded,
-                    size: 52,
-                    color: Color(0xFFFFB300),
-                  ),
-                ),
-                const SizedBox(height: 26),
-                Text(
-                  ctx.t('ringTitle'),
-                  style: const TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF2A2118),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  quote,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    height: 1.8,
-                    color: Color(0xFF6B5B49),
-                  ),
-                ),
-                const Spacer(),
-                SizedBox(
-                  width: double.infinity,
-                  height: 54,
-                  child: FilledButton(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF2A2118),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(27),
-                      ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(28),
+              child: Column(
+                children: [
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Color(0x44FFB300),
+                          blurRadius: 40,
+                          spreadRadius: 12,
+                        ),
+                      ],
                     ),
-                    onPressed: () => Navigator.of(ctx).pop(),
-                    child: Text(
-                      ctx.t('wokeUp'),
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    child: const Icon(
+                      Icons.wb_sunny_rounded,
+                      size: 52,
+                      color: Color(0xFFFFB300),
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 26),
+                  Text(
+                    ctx.t('ringTitle'),
+                    style: const TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF2A2118),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    quote,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      height: 1.8,
+                      color: Color(0xFF6B5B49),
+                    ),
+                  ),
+                  const Spacer(),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 54,
+                    child: FilledButton(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF2A2118),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(27),
+                        ),
+                      ),
+                      onPressed: () => Navigator.of(ctx).pop(),
+                      child: Text(
+                        ctx.t('wokeUp'),
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
-      ),
-    ),
+      );
+    },
   );
 }
 
-Future<void> showCake(BuildContext context, String birthday) {
+Future<void> showCakeDialog(BuildContext context, String birthday) {
   return showDialog<void>(
     context: context,
     barrierDismissible: false,
-    builder: (_) => PopScope(
-      canPop: false,
-      child: _CakeDialog(birthday: birthday),
-    ),
+    builder: (_) {
+      return PopScope(
+        canPop: false,
+        child: CakeDialog(birthday: birthday),
+      );
+    },
   );
 }
 
-class _CakeDialog extends StatefulWidget {
-  const _CakeDialog({required this.birthday});
+class CakeDialog extends StatefulWidget {
+  const CakeDialog({super.key, required this.birthday});
+
   final String birthday;
 
   @override
-  State<_CakeDialog> createState() => _CakeDialogState();
+  State<CakeDialog> createState() => _CakeDialogState();
 }
 
-class _CakeDialogState extends State<_CakeDialog>
+class _CakeDialogState extends State<CakeDialog>
     with TickerProviderStateMixin {
+  static const int _tickMs = 80;
+  static const double _thresholdDb = -22;
+  static const int _needMs = 480;
+
   late final AnimationController _flicker = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 1400),
@@ -3649,32 +4039,126 @@ class _CakeDialogState extends State<_CakeDialog>
     duration: const Duration(milliseconds: 900),
   );
 
-  bool _out = false;
-  bool _popped = false;
+  final AudioRecorder _recorder = AudioRecorder();
+  final ValueNotifier<double> _meter = ValueNotifier<double>(0);
+
+  StreamSubscription<Amplitude>? _amplitudeSub;
+  String? _tempPath;
+  bool _micReady = false;
+  bool _candlesOut = false;
+  bool _closed = false;
+  int _loudMs = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _startListening();
+  }
 
   @override
   void dispose() {
+    _amplitudeSub?.cancel();
+    _amplitudeSub = null;
+    unawaited(_shutdownRecorder());
     _flicker.dispose();
     _blow.dispose();
+    _meter.dispose();
     super.dispose();
   }
 
+  Future<void> _shutdownRecorder() async {
+    try {
+      if (await _recorder.isRecording()) await _recorder.stop();
+    } catch (_) {
+      // 设备不支持时忽略
+    }
+    try {
+      await _recorder.dispose();
+    } catch (_) {
+      // 忽略
+    }
+    final path = _tempPath;
+    if (path == null) return;
+    try {
+      final file = File(path);
+      if (await file.exists()) await file.delete();
+    } catch (_) {
+      // 忽略
+    }
+  }
+
+  Future<void> _startListening() async {
+    try {
+      final granted = await _recorder.hasPermission();
+      if (!granted) {
+        if (mounted) setState(() => _micReady = false);
+        return;
+      }
+      final dir = await getTemporaryDirectory();
+      _tempPath =
+      '${dir.path}/blow_${DateTime.now().microsecondsSinceEpoch}.m4a';
+      await _recorder.start(
+        const RecordConfig(
+          encoder: AudioEncoder.aacLc,
+          sampleRate: 44100,
+          numChannels: 1,
+        ),
+        path: _tempPath!,
+      );
+      _amplitudeSub = _recorder
+          .onAmplitudeChanged(const Duration(milliseconds: _tickMs))
+          .listen(_onAmplitude);
+      if (mounted) setState(() => _micReady = true);
+    } catch (e) {
+      debugPrint('microphone unavailable: $e');
+      if (mounted) setState(() => _micReady = false);
+    }
+  }
+
+  void _onAmplitude(Amplitude amplitude) {
+    if (_candlesOut || !mounted) return;
+    final normalized = ((amplitude.current + 60) / 60).clamp(0.0, 1.0);
+    _meter.value = normalized;
+
+    if (amplitude.current >= _thresholdDb) {
+      _loudMs += _tickMs;
+    } else {
+      _loudMs = max(0, _loudMs - _tickMs ~/ 2);
+    }
+
+    if (_loudMs >= _needMs) {
+      unawaited(_extinguish());
+    }
+  }
+
   Future<void> _extinguish() async {
-    if (_out) return;
-    setState(() => _out = true);
+    if (_candlesOut) return;
+    setState(() => _candlesOut = true);
+    _amplitudeSub?.cancel();
+    _amplitudeSub = null;
+    _meter.value = 0;
+    try {
+      if (await _recorder.isRecording()) await _recorder.stop();
+    } catch (_) {
+      // 忽略
+    }
     await _blow.forward();
     await Future<void>.delayed(const Duration(milliseconds: 1200));
-    if (!mounted || _popped) return;
-    _popped = true;
+    if (!mounted || _closed) return;
+    _closed = true;
     Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
-    final l = context.l;
+    final l = context.l10n;
     final birth = parseYmd(widget.birthday);
     final age = birth == null ? 0 : ageOn(birth, DateTime.now());
     final adult = age >= 18;
+
+    final hint = _candlesOut
+        ? l.t('cakeOut')
+        : (_micReady ? l.t('cakeBlow') : l.t('micOff'));
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -3683,10 +4167,12 @@ class _CakeDialogState extends State<_CakeDialog>
         tween: Tween<double>(begin: 0.9, end: 1),
         duration: const Duration(milliseconds: 420),
         curve: Curves.easeOutBack,
-        builder: (c, v, child) => Opacity(
-          opacity: v.clamp(0.0, 1.0),
-          child: Transform.scale(scale: v, child: child),
-        ),
+        builder: (context, value, child) {
+          return Opacity(
+            opacity: value.clamp(0.0, 1.0),
+            child: Transform.scale(scale: value, child: child),
+          );
+        },
         child: Container(
           padding: const EdgeInsets.fromLTRB(20, 22, 20, 16),
           decoration: BoxDecoration(
@@ -3734,23 +4220,40 @@ class _CakeDialogState extends State<_CakeDialog>
                 width: double.infinity,
                 height: 190,
                 child: CustomPaint(
-                  painter: _CakePainter(flicker: _flicker, blow: _blow),
+                  painter: CakePainter(flicker: _flicker, blow: _blow),
                 ),
               ),
               const SizedBox(height: 4),
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 260),
                 child: Text(
-                  _out ? l.t('candlesOut') : l.t('blowCandle'),
-                  key: ValueKey('$_out'),
+                  hint,
+                  key: ValueKey('$_candlesOut-$_micReady'),
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: _out
+                    color: _candlesOut
                         ? const Color(0xFFFFD54F)
                         : Colors.white.withValues(alpha: 0.55),
                     fontSize: 12,
                     height: 1.6,
                   ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(3),
+                child: ValueListenableBuilder<double>(
+                  valueListenable: _meter,
+                  builder: (context, value, _) {
+                    return LinearProgressIndicator(
+                      value: value,
+                      minHeight: 4,
+                      backgroundColor: Colors.white.withValues(alpha: 0.08),
+                      valueColor: const AlwaysStoppedAnimation(
+                        Color(0xFFFFD54F),
+                      ),
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: 14),
@@ -3767,9 +4270,9 @@ class _CakeDialogState extends State<_CakeDialog>
                       borderRadius: BorderRadius.circular(23),
                     ),
                   ),
-                  onPressed: _out ? null : _extinguish,
+                  onPressed: _candlesOut ? null : _extinguish,
                   child: Text(
-                    _out ? l.t('candlesOut') : l.t('blowCandle'),
+                    _candlesOut ? l.t('cakeOut') : l.t('cakeManual'),
                     style: const TextStyle(fontSize: 13),
                   ),
                 ),
@@ -3782,34 +4285,44 @@ class _CakeDialogState extends State<_CakeDialog>
   }
 }
 
-class _CakePainter extends CustomPainter {
-  _CakePainter({required this.flicker, required this.blow})
+class CakePainter extends CustomPainter {
+  CakePainter({required this.flicker, required this.blow})
       : super(repaint: Listenable.merge([flicker, blow]));
 
   final Animation<double> flicker;
   final Animation<double> blow;
 
-  Path _flame(Offset b, double h, double w, double tilt) {
+  Path _flamePath(Offset base, double height, double width, double tilt) {
     return Path()
-      ..moveTo(b.dx, b.dy - h)
-      ..quadraticBezierTo(b.dx + w, b.dy - h * 0.5, b.dx + tilt, b.dy)
-      ..quadraticBezierTo(b.dx - w, b.dy - h * 0.5, b.dx, b.dy - h)
+      ..moveTo(base.dx, base.dy - height)
+      ..quadraticBezierTo(
+        base.dx + width,
+        base.dy - height * 0.5,
+        base.dx + tilt,
+        base.dy,
+      )
+      ..quadraticBezierTo(
+        base.dx - width,
+        base.dy - height * 0.5,
+        base.dx,
+        base.dy - height,
+      )
       ..close();
   }
 
   @override
   void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-    final cx = w / 2;
+    final width = size.width;
+    final height = size.height;
+    final centerX = width / 2;
     final lit = (1 - blow.value).clamp(0.0, 1.0);
     final smoke = blow.value;
-    final t = flicker.value * 2 * pi;
+    final phase = flicker.value * 2 * pi;
 
     final plateRect = Rect.fromCenter(
-      center: Offset(cx, h * 0.9),
-      width: w * 0.82,
-      height: h * 0.13,
+      center: Offset(centerX, height * 0.9),
+      width: width * 0.82,
+      height: height * 0.13,
     );
     canvas.drawOval(plateRect, Paint()..color = const Color(0x1FFFFFFF));
     canvas.drawOval(
@@ -3817,62 +4330,74 @@ class _CakePainter extends CustomPainter {
       Paint()..color = const Color(0x0DFFFFFF),
     );
 
-    final bodyW = w * 0.56;
-    final bodyH = h * 0.34;
-    final body = Rect.fromLTWH(cx - bodyW / 2, h * 0.87 - bodyH, bodyW, bodyH);
+    final bodyWidth = width * 0.56;
+    final bodyHeight = height * 0.34;
+    final bodyRect = Rect.fromLTWH(
+      centerX - bodyWidth / 2,
+      height * 0.87 - bodyHeight,
+      bodyWidth,
+      bodyHeight,
+    );
+
+    final bodyRRect = RRect.fromRectAndCorners(
+      bodyRect,
+      topLeft: const Radius.circular(16),
+      topRight: const Radius.circular(16),
+      bottomLeft: const Radius.circular(10),
+      bottomRight: const Radius.circular(10),
+    );
 
     canvas.drawRRect(
-      RRect.fromRectAndCorners(
-        body,
-        topLeft: const Radius.circular(16),
-        topRight: const Radius.circular(16),
-        bottomLeft: const Radius.circular(10),
-        bottomRight: const Radius.circular(10),
-      ),
+      bodyRRect,
       Paint()
         ..shader = const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [Color(0xFFFFC7B2), Color(0xFFE2705A)],
-        ).createShader(body),
+        ).createShader(bodyRect),
     );
 
     canvas.drawRRect(
-      RRect.fromRectAndCorners(
-        body,
-        topLeft: const Radius.circular(16),
-        topRight: const Radius.circular(16),
-        bottomLeft: const Radius.circular(10),
-        bottomRight: const Radius.circular(10),
-      ),
+      bodyRRect,
       Paint()
         ..shader = const LinearGradient(
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
           colors: [Color(0x33FFFFFF), Color(0x00FFFFFF), Color(0x33000000)],
-        ).createShader(body),
+        ).createShader(bodyRect),
     );
 
-    final cream = Rect.fromLTWH(body.left - 2, body.top - 6, bodyW + 4, 20);
+    final creamRect = Rect.fromLTWH(
+      bodyRect.left - 2,
+      bodyRect.top - 6,
+      bodyWidth + 4,
+      20,
+    );
+    final creamPaint = Paint()..color = const Color(0xFFFFF3E6);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(cream, const Radius.circular(10)),
-      Paint()..color = const Color(0xFFFFF3E6),
+      RRect.fromRectAndRadius(creamRect, const Radius.circular(10)),
+      creamPaint,
     );
 
-    final dripPaint = Paint()..color = const Color(0xFFFFF3E6);
     for (var i = 0; i < 5; i++) {
-      final x = cream.left + cream.width * (0.1 + i * 0.2);
-      final r = 4.0 + (i.isEven ? 4.0 : 0.0);
-      canvas.drawCircle(Offset(x, cream.bottom + r * 0.35), r, dripPaint);
+      final x = creamRect.left + creamRect.width * (0.1 + i * 0.2);
+      final radius = 4.0 + (i.isEven ? 4.0 : 0.0);
+      canvas.drawCircle(
+        Offset(x, creamRect.bottom + radius * 0.35),
+        radius,
+        creamPaint,
+      );
     }
 
-    final r2 = Random(11);
+    final sprinkleRandom = Random(11);
     for (var i = 0; i < 16; i++) {
-      final x = body.left + 10 + r2.nextDouble() * (bodyW - 20);
-      final y = cream.bottom + 12 + r2.nextDouble() * (bodyH - 34);
+      final x = bodyRect.left + 10 + sprinkleRandom.nextDouble() * (bodyWidth - 20);
+      final y = creamRect.bottom +
+          12 +
+          sprinkleRandom.nextDouble() * (bodyHeight - 34);
       canvas.save();
       canvas.translate(x, y);
-      canvas.rotate(r2.nextDouble() * pi);
+      canvas.rotate(sprinkleRandom.nextDouble() * pi);
       canvas.drawRRect(
         RRect.fromRectAndRadius(
           Rect.fromCenter(center: Offset.zero, width: 6, height: 2.4),
@@ -3888,13 +4413,13 @@ class _CakePainter extends CustomPainter {
       canvas.restore();
     }
 
-    final candleBottom = body.top + 4;
-    const candleH = 42.0;
+    final candleBottom = bodyRect.top + 4;
+    const candleHeight = 42.0;
 
     for (var i = -1; i <= 1; i++) {
-      final x = cx + i * bodyW * 0.26;
-      final top = candleBottom - candleH;
-      final candleRect = Rect.fromLTWH(x - 4.5, top, 9, candleH);
+      final x = centerX + i * bodyWidth * 0.26;
+      final candleTop = candleBottom - candleHeight;
+      final candleRect = Rect.fromLTWH(x - 4.5, candleTop, 9, candleHeight);
 
       canvas.drawRRect(
         RRect.fromRectAndRadius(candleRect, const Radius.circular(3)),
@@ -3909,8 +4434,8 @@ class _CakePainter extends CustomPainter {
       );
 
       canvas.drawLine(
-        Offset(x, top),
-        Offset(x, top - 6),
+        Offset(x, candleTop),
+        Offset(x, candleTop - 6),
         Paint()
           ..color = const Color(0xFF5D4037)
           ..strokeWidth = 1.6
@@ -3918,14 +4443,14 @@ class _CakePainter extends CustomPainter {
       );
 
       if (lit > 0.03) {
-        final fl = 0.86 + 0.22 * sin(t + i * 1.5);
-        final fh = 21 * lit * fl;
-        final fw = 7.5 * lit * fl;
-        final tilt = sin(t * 0.9 + i) * 1.4 + smoke * 7;
-        final base = Offset(x, top - 7);
+        final flick = 0.86 + 0.22 * sin(phase + i * 1.5);
+        final flameHeight = 21 * lit * flick;
+        final flameWidth = 7.5 * lit * flick;
+        final tilt = sin(phase * 0.9 + i) * 1.4 + smoke * 7;
+        final base = Offset(x, candleTop - 7);
 
         final glowRect = Rect.fromCircle(
-          center: Offset(x, base.dy - fh * 0.5),
+          center: Offset(x, base.dy - flameHeight * 0.5),
           radius: 26 * lit,
         );
         canvas.drawCircle(
@@ -3937,22 +4462,26 @@ class _CakePainter extends CustomPainter {
             ).createShader(glowRect),
         );
 
-        final outerRect =
-        Rect.fromLTWH(x - 14, base.dy - fh - 6, 28, fh + 10);
+        final flameRect = Rect.fromLTWH(
+          x - 14,
+          base.dy - flameHeight - 6,
+          28,
+          flameHeight + 10,
+        );
         canvas.drawPath(
-          _flame(base, fh, fw, tilt),
+          _flamePath(base, flameHeight, flameWidth, tilt),
           Paint()
             ..shader = const LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [Color(0xFFFFF59D), Color(0xFFFFA000)],
-            ).createShader(outerRect),
+            ).createShader(flameRect),
         );
         canvas.drawPath(
-          _flame(
+          _flamePath(
             Offset(base.dx, base.dy - 1),
-            fh * 0.52,
-            fw * 0.46,
+            flameHeight * 0.52,
+            flameWidth * 0.46,
             tilt * 0.45,
           ),
           Paint()..color = const Color(0xFFFFFDE7),
@@ -3961,14 +4490,15 @@ class _CakePainter extends CustomPainter {
 
       if (smoke > 0.02) {
         for (var k = 0; k < 3; k++) {
-          final p = (smoke * 1.6 - k * 0.28).clamp(0.0, 1.0);
-          if (p <= 0.01) continue;
-          final yy = top - 10 - p * 54;
-          final xx = x + sin(p * 4 + k * 1.3) * 8;
+          final progress = (smoke * 1.6 - k * 0.28).clamp(0.0, 1.0);
+          if (progress <= 0.01) continue;
+          final smokeY = candleTop - 10 - progress * 54;
+          final smokeX = x + sin(progress * 4 + k * 1.3) * 8;
           canvas.drawCircle(
-            Offset(xx, yy),
-            2.5 + p * 8,
-            Paint()..color = Colors.white.withValues(alpha: 0.14 * (1 - p)),
+            Offset(smokeX, smokeY),
+            2.5 + progress * 8,
+            Paint()
+              ..color = Colors.white.withValues(alpha: 0.14 * (1 - progress)),
           );
         }
       }
@@ -3976,5 +4506,5 @@ class _CakePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_CakePainter old) => false;
+  bool shouldRepaint(CakePainter oldDelegate) => false;
 }
