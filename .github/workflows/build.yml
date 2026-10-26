@@ -21,7 +21,7 @@ jobs:
 
       # 1. 先用官方命令降级，防止破坏 yaml 格式
       - run: flutter pub get
-      - run: flutter pub add record:4.4.0
+      - run: flutter pub add record:5.0.0
 
       # 2. 找回你之前的补丁文件，强行给 4.4.0 补上 namespace 和 compileSdk
       - name: Fix record namespace
