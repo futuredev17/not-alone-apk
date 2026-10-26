@@ -193,7 +193,7 @@ const Map<String, List<String>> _dict = {
   'aiTimeout': ['我这边有点慢……再等我一下好吗？', 'A little slow… give me a moment?'],
   'aiError': ['信号好像走丢了', 'Connection lost'],
   'aiErrorHint': ['看看电脑上的 Ollama 还在不在？', 'Is Ollama still running on the computer?'],
-  'aiFallback': ['嗯……我在听，你继续说。', 'Mm… I am here. Go on.'],
+  'aiFallback': ['sb。', 'Mm… I am here. Go on.'],
   'match': ['随机匹配', 'Random match'],
   'matching': ['正在寻找同频的人…', 'Looking for someone like you…'],
   'rematch': ['换一个人', 'Someone else'],
@@ -3269,6 +3269,8 @@ class _AiChatPanelState extends State<AiChatPanel> {
         'prompt': buffer.toString(),
         'stream': false,
         // 关闭 qwen3 的思考链，避免回复又慢又长；
+        // 如果接口提示不支持 thinking，删掉这一行即可
+        'think': false,
         // 对话期间保持模型常驻内存，减少冷启动等待
         'keep_alive': '30m',
         'options': {
