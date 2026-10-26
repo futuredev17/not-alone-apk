@@ -19,15 +19,16 @@ jobs:
           flutter-version: '3.27.1'
           channel: 'stable'
 
-      # 1. 先用官方命令降级，防止破坏 yaml 格式
+      # 1. 禁用 Linux 桌面端
+      - run: flutter config --no-enable-linux-desktop
+
+      # 2. 拉取依赖 (会拉取最新的 5.1.0)
       - run: flutter pub get
-      - run: flutter pub add record:5.0.0
 
-      # 2. 找回你之前的补丁文件，强行给 4.4.0 补上 namespace 和 compileSdk
-      - name: Fix record namespace
-        run: bash .github/fix_record_file.txt
+      # 3. 【核心绝杀】在安卓打包之前，物理删除缓存里所有的 Linux 相关录音代码！
+      - run: find ~/.pub-cache -type d -name "record_linux*" -exec rm -rf {} +
 
-      # 3. 直接打包
+      # 4. 打包
       - run: flutter build apk --release
 
       - name: Upload APK
