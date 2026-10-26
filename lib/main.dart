@@ -31,7 +31,7 @@ const double kLon = 117.6470;
 /// 另外电脑端还要做两件事，否则同样连不上：
 ///   1) setx OLLAMA_HOST 0.0.0.0，然后彻底退出 Ollama 再启动
 ///   2) 放行防火墙 11434 端口
-const String kOllamaBaseUrl = 'http://192.168.1.3:11434';
+const String kOllamaBaseUrl = 'http://192.168.1.4:11434';
 
 /// 必须和 `ollama list` 里的 tag 完全一致
 const String kOllamaModel = 'qwen3.5:4b';
