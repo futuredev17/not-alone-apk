@@ -3269,8 +3269,6 @@ class _AiChatPanelState extends State<AiChatPanel> {
         'prompt': buffer.toString(),
         'stream': false,
         // 关闭 qwen3 的思考链，避免回复又慢又长；
-        // 如果接口提示不支持 thinking，删掉这一行即可
-        'think': false,
         // 对话期间保持模型常驻内存，减少冷启动等待
         'keep_alive': '30m',
         'options': {
