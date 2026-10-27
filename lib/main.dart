@@ -77,7 +77,7 @@ const String kOllamaModel = String.fromEnvironment(
 /// 启动：flutter run --dart-define=TREE_HOLE_API=https://your-domain.com
 const String kTreeHoleApiBase = String.fromEnvironment(
   'TREE_HOLE_API',
-  defaultValue: '',
+  defaultValue: 'http://47.83.136.229:8787',
 );
 
 /// 树洞人格：温柔倾听者，简短回复，不答知识题
