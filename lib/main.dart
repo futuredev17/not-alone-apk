@@ -65,7 +65,7 @@ const double kLon = 117.6470;
 /// 本地 Ollama。真机联调时用 --dart-define=OLLAMA_URL=http://192.168.x.x:11434
 const String kOllamaBaseUrl = String.fromEnvironment(
   'OLLAMA_URL',
-  defaultValue: 'http://192.168.1.4:11434',
+  defaultValue: 'http://47.83.136.229:11434',
 );
 const String kOllamaModel = String.fromEnvironment(
   'OLLAMA_MODEL',
