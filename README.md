@@ -1,59 +1,58 @@
-# 🌧️ Not Alone (不孤单)
+# 🌙 Not alone (不孤单)
 
-> "You are not late, you are just in your own time zone."
-> “慢慢来，你还没有迟到，你只是在自己的时区里。”
+> "Death only kills one of your days; anxiety kills every one of them."
+> “死亡只会杀死你的一天，而焦虑会杀死你的每一天。”
 
-**Not Alone** is an open-source, highly customizable emotional alarm clock built with Flutter. 
-**Not Alone** 是一个基于 Flutter 开发的开源、高度可定制的情绪陪伴闹钟。
+An open-source emotional companion app built with Flutter and AI. Designed for those who need a quiet space to be heard.
+一个基于 Flutter 与 AI 开发的开源情绪陪伴应用。为需要被倾听的灵魂提供一个安静的角落。
 
-It was born from a simple, personal realization: waking up alone in a foreign city can be incredibly exhausting. 
-它的诞生源于一个非常真实的痛点：一个人在外地醒来时，那种深深的疲惫与孤独感。
+## ✨ Core Features / 核心功能
 
-This isn't just an alarm; it's a digital umbrella for those who need a little warmth in their daily routine.
-这不仅仅是一个闹钟，这是给那些在日常生活中需要一点温暖的人，准备的一把“赛博雨伞”。
+**AI Tree Hole**: A gentle AI listener powered by a local/cloud LLM, strictly restricted to providing emotional support only.
+**AI 树洞**：接入大语言模型的温柔倾听者，严格限制为仅提供情绪安慰与共情。
 
-## ✨ Core Features (核心功能)
+**Real-time Matching**: Anonymous, dual-consent WebSocket matching. You only connect when both agree.
+**真人匹配**：基于 WebSocket 的匿名双向授权匹配，只有双方都同意才会建立连接。
 
-- **⏰ Emotional Alarm & Real Blow-out Candles**: Wake up to custom local audio and random comforting messages. On your birthday, a beautiful electronic cake pops up, and you can literally blow on your phone's microphone to extinguish the candles.
-- **⏰ 情绪闹钟与真实吹气蜡烛**：用自定义的本地音乐和随机治愈文案将你唤醒。在你生日那天，会弹出一个精美的电子蛋糕，你可以直接对着手机麦克风吹气来熄灭蜡烛。
+**Safety Guard**: Built-in risk control intercepts extreme or self-harm keywords, providing emergency hotlines.
+**安全风控**：内置底层敏感词拦截与极端情绪预警，并在必要时弹出紧急心理援助热线。
 
-- **🌤️ Real-time Weather Details**: Integrated with Amap API. It provides not just the weather, but detailed metrics like humidity, UV index, and a 12-hour forecast.
-- **🌤️ 实时天气详情**：接入高德 API。不仅显示温度，还提供湿度、紫外线、未来12小时趋势等详细数据。
+**Daily Nudges**: Local notifications at 8 AM, 12 PM, 4 PM, and 8 PM with randomized comforting quotes.
+**每日鼓励**：无需联网，每天 8点/12点/16点/20点 准时推送本地随机暖心话语。
 
-- **📅 Global Calendar**: Track holidays across China, Germany, and the US. Because we are all in this together.
-- **📅 全球化日历**：支持中国、德国、美国等多国节假日显示。因为我们都身处同一个世界。
+**Global Context**: Supports 6 languages (ZH/EN/JA/DE/ES/FR) and multi-country holiday calendars.
+**全球视野**：支持中英日德西法 6 国语言切换，日历自动适配多国节假日。
 
-- **🎨 Deep Customization & Bilingual**: Change wallpapers, ringtones, and UI themes seamlessly. Full support for Chinese and English.
-- **🎨 深度自定义与双语**：无缝切换壁纸、铃声和主题颜色。完美支持中英文双语切换。
+**Privacy First**: Fully anonymous, no account required, all core data stays on your device.
+**隐私至上**：完全匿名，无需注册，核心数据仅保存在本地。
 
-## 🛠️ Tech Stack (技术栈)
+## 🎯 The Purpose / 开发初衷
 
-- **Framework**: Flutter
-- **Language**: Dart
-- **APIs**: Amap Weather, Open-Meteo
-- **Local Storage**: shared_preferences
+I built this app because I know what it feels like to be alone in the dark. This is not just a project; it's a digital shelter.
+我开发这个应用，是因为我深知在黑暗中独行的滋味。这不仅仅是一个项目，更是一个数字避难所。
 
-## 🎯 Roadmap (迭代路线)
+If it can make even one person feel a little warmer, it's worth it.
+如果能让哪怕一个人感到一丝温暖，它就值得存在。
 
-- [x] V1.0: Basic Alarm & Beautiful UI.
-- [x] V1.0：基础闹钟与绝美 UI。
+## 🧑‍💻 About the Developer / 关于开发者
 
-- [x] V1.5: Multi-language, Global Calendar, Custom Settings, and REAL microphone blow-out detection.
-- [x] V1.5：多语言、多国日历、自定义设置，以及真实的麦克风吹气检测。
+A 17-year-old self-taught full-stack developer from China, aiming for a DevOps career in Germany.
+一个来自中国的 17 岁自学全栈开发者，目标是在德国开启 DevOps 职业生涯。
 
-- [ ] V2.0: Real backend server for the "Tree Hole" matching system.
-- [ ] V2.0：搭建真实的后端服务器，实现“树洞”匿名匹配系统。
+GitHub: [@futuredev17](https://github.com/futuredev17)
 
-- [ ] V3.0: AI integration for emotional companionship and cross-language real-time translation.
-- [ ] V3.0：接入 AI 大模型，实现情绪陪伴与跨语言实时翻译。
+## 🚀 Live Demo / 在线体验
 
-## 💡 Why Open Source? (为什么开源？)
+**Web Version**: [http://47.83.136.229](http://47.83.136.229)
+**网页版**：[http://47.83.136.229](http://47.83.136.229)
 
-I am a 17-year-old self-taught developer. I built this not for profit, but to prove that code can be warm. 
-我是一个 17 岁的自学开发者。我做这个不是为了赚钱，而是为了证明代码也可以是有温度的。
+*Note: The AI feature runs on a lightweight CPU server, so responses might be slightly delayed.*
+*注：AI功能运行于轻量级CPU服务器，回复可能会有轻微延迟。*
 
-If you feel lonely sometimes, I hope this app brings you a little comfort.
-如果你有时感到孤独，我希望这个 App 能给你带来一点安慰。
+## 🛠 Tech Stack / 技术栈
 
-*Built with ❤️ by a Nobody.*
-*由一个 Nobody 用 ❤️ 构建。*
+*   **Framework**: Flutter & Dart
+*   **AI Engine**: Ollama (Qwen 1.5B)
+*   **Server**: Dart WebSocket, Nginx (Dockerized)
+*   **Cloud**: Alibaba Cloud (ECS)
+*   **CI/CD**: GitHub Actions
