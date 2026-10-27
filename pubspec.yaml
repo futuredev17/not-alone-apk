@@ -28,4 +28,6 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/
+    - assets/images/flower_field_en.png
+    - assets/images/birthday_cake.png
+    - assets/Ring10.wav
