@@ -69,7 +69,7 @@ const String kOllamaBaseUrl = String.fromEnvironment(
 );
 const String kOllamaModel = String.fromEnvironment(
   'OLLAMA_MODEL',
-  defaultValue: 'qwen2.5：1.5b',
+  defaultValue: 'qwen2.5:1.5b',
 );
 
 /// 真人匹配服务地址，例如 https://your-domain.com
